@@ -1,0 +1,3 @@
+#!/bin/bash
+
+ssh $1@$2 netstat -nat | grep -i "$3" | wc -l
