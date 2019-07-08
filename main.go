@@ -103,7 +103,7 @@ func main() {
 		w.Write([]byte("Not available"))
 	})
 	r.Get("/netstat", NetStat)
-	log.Fatal(http.ListenAndServe(":80", r))
+	log.Fatal(http.ListenAndServe(":9090", r))
 }
 
 func initServer(servers []m.Server) {
