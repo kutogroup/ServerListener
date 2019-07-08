@@ -31,61 +31,6 @@ func main() {
 		initServer(servers)
 	}
 
-	for _, s := range servers {
-		logger.I("start get server, username=%s, host=%s", s.Username, s.Host)
-		sri, err := strconv.ParseInt(s.ReceiverStart, 10, 64)
-		if err != nil {
-			logger.E("get server receive err=%s", err)
-			continue
-		}
-
-		sti, err := strconv.ParseInt(s.TransmitStart, 10, 64)
-		if err != nil {
-			logger.E("get server transmit err=%s", err)
-			continue
-		}
-
-		r := strings.TrimRight(utils.CommandGetResult("./receive", s.Username, s.Host), "\n")
-		t := strings.TrimRight(utils.CommandGetResult("./transmit", s.Username, s.Host), "\n")
-		logger.I("r=%s, t=%s", r, t)
-
-		speed := &m.Speed{}
-		ri, err := strconv.ParseInt(r, 10, 64)
-		if err != nil {
-			logger.E("get receive err=%s", err)
-			continue
-		}
-
-		ti, err := strconv.ParseInt(t, 10, 64)
-		if err != nil {
-			logger.E("get transmit err=%s", err)
-			continue
-		}
-
-		speed.ServerID = s.ID
-		speed.Receive = strconv.FormatInt(ri-sri, 10)
-		speed.Transmit = strconv.FormatInt(ti-sti, 10)
-		err = db.Insert(speed)
-		if err != nil {
-			logger.E("insert db failed, err=%s", err)
-			continue
-		}
-
-		c := utils.CommandGetResult("./conn", s.Username, s.Host, strconv.FormatInt(s.Port, 10))
-		c = strings.Trim(c, " ")
-		c = strings.Trim(c, "\n")
-		logger.I("c=%s", c)
-		conn := &m.Conns{}
-		num, err := strconv.ParseInt(c, 10, 64)
-		if err != nil {
-			logger.E("parse conn to int failed, err=%s", err)
-			continue
-		}
-		conn.Conns = num
-		conn.ServerID = s.ID
-		db.Insert(conn)
-	}
-
 	ticker := time.NewTicker(time.Minute)
 	go func() {
 		for range ticker.C {
