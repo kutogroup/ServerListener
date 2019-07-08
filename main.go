@@ -88,6 +88,7 @@ func main() {
 					conn := &m.Conns{}
 					num, err := strconv.ParseInt(c, 10, 64)
 					if err != nil {
+						logger.E("parse conn to int failed, err=%s", err)
 						continue
 					}
 					conn.Conns = num
