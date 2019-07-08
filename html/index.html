@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" id="main-stylesheet" data-version="1.1.0" href="styles/shards-dashboards.1.1.0.min.css">
     <link rel="stylesheet" href="styles/extras.1.1.0.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
+    <script src="js/moment.min.js"></script>
     <script async defer src="js/buttons.js"></script>
 </head>
 
@@ -121,11 +121,7 @@
             return moment().add(days, 'd').format();
         }
 
-        window.randomScalingFactor = function () {
-            return Math.round(Math.random() * 10);
-        }
-
-        var config = {
+        var configModel = {
             type: 'line',
             data: {
                 datasets: [
@@ -135,6 +131,30 @@
                         borderColor: "#FF0000",
                         fill: false,
                         data: [
+                            {
+                                x: "2019-07-01 15:01",
+                                y: 1
+                            },
+                            {
+                                x: "2019-07-01 15:02",
+                                y: 2
+                            },
+                            {
+                                x: "2019-07-01 15:03",
+                                y: 3
+                            },
+                            {
+                                x: "2019-07-01 15:04",
+                                y: 4
+                            },
+                            {
+                                x: "2019-07-01 15:05",
+                                y: 5
+                            },
+                            {
+                                x: "2019-07-01 15:06",
+                                y: 6
+                            }
                         ],
                     }
                 ]
@@ -159,18 +179,25 @@
                         display: true,
                         scaleLabel: {
                             display: true,
-                            labelString: 'value'
+                            labelString: 'Value'
                         }
                     }]
                 },
             }
         };
 
+        $.get("/server", function(data) {
+            console.log(data)
+            var servers = eval("(" + data + ")");
+            console.log(servers[0].host)
+        })
+
+
         window.onload = function () {
             var ctx = document.getElementById("canvas_speed").getContext('2d');
-            window.speedline = new Chart(ctx, config)
+            window.speedline = new Chart(ctx, configModel)
             var ctx = document.getElementById("canvas_conns").getContext('2d');
-            window.speedline = new Chart(ctx, config)
+            window.speedline = new Chart(ctx, configModel)
         }
     </script>
 </body>
