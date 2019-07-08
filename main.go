@@ -73,6 +73,8 @@ func main() {
 						continue
 					}
 
+					logger.I("sri=%d, ri=%d, sti=%d, ti=%d", sri, ri, sti, ti)
+
 					speed.ServerID = s.ID
 					speed.Receive = strconv.FormatInt(ri-sri, 10)
 					speed.Transmit = strconv.FormatInt(ti-sti, 10)
@@ -107,7 +109,6 @@ func main() {
 	})
 	r.GET("/speed", Speed)
 	r.GET("/conns", Conns)
-	r.GET("/server", Server)
 	r.ServeFiles("/html/*filepath", http.Dir("html/"))
 	log.Fatal(http.ListenAndServe(":9090", r))
 }
@@ -139,19 +140,6 @@ func initServer() {
 	}
 }
 
-//Server 获取服务器
-func Server(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	b, err := json.Marshal(servers)
-
-	if err != nil {
-		logger.E("get server failed, err=%s", err)
-		w.WriteHeader(405)
-		return
-	}
-
-	w.Write(b)
-}
-
 //Speed 流量监听
 func Speed(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	var speeds []m.Speed
@@ -159,35 +147,44 @@ func Speed(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	y, mo, d := time.Now().Date()
 
 	r.ParseForm()
-	sid := r.Form.Get("sid")
-	cs := r.Form.Get("startDate")
-	ce := r.Form.Get("endDate")
 
-	if len(cs) != 10 {
-		cs = fmt.Sprintf("%04d-%02d-%02d", y, mo, d)
+	result := make([]interface{}, 0)
+	for _, server := range servers {
+		cs := r.Form.Get("startDate")
+		ce := r.Form.Get("endDate")
+
+		if len(cs) != 10 {
+			cs = fmt.Sprintf("%04d-%02d-%02d", y, mo, d)
+		}
+
+		if len(ce) != 10 {
+			ce = fmt.Sprintf("%04d-%02d-%02d 23:59:59", y, mo, d)
+		} else {
+			ce = ce + " 23:59:59"
+		}
+		fmt.Println("cs=" + cs + ", ce=" + ce)
+
+		err := db.Select(&speeds,
+			fmt.Sprintf("%s=%d AND %s>='%s' AND %s<='%s'",
+				m.ColumnSpeedServerID,
+				server.ID,
+				m.ColumnServerCreateAt, cs,
+				m.ColumnServerCreateAt, ce))
+
+		if err != nil {
+			logger.E("select today failed, err=%s", err)
+			w.WriteHeader(401)
+			return
+		}
+
+		result = append(result, map[string]interface{}{
+			m.ColumnServerTitle:      server.Title,
+			m.ColumnServerChartColor: server.ChartColor,
+			"speeds":                 speeds,
+		})
 	}
 
-	if len(ce) != 10 {
-		ce = fmt.Sprintf("%04d-%02d-%02d 23:59:59", y, mo, d)
-	} else {
-		ce = ce + " 23:59:59"
-	}
-	fmt.Println("cs=" + cs + ", ce=" + ce)
-
-	err := db.Select(&speeds,
-		fmt.Sprintf("%s=%s AND %s>='%s' AND %s<='%s'",
-			m.ColumnSpeedServerID,
-			sid,
-			m.ColumnServerCreateAt, cs,
-			m.ColumnServerCreateAt, ce))
-
-	if err != nil {
-		logger.E("select today failed, err=%s", err)
-		w.WriteHeader(401)
-		return
-	}
-
-	b, err := json.Marshal(speeds)
+	b, err := json.Marshal(result)
 	if err != nil {
 		w.WriteHeader(402)
 		return
@@ -203,35 +200,44 @@ func Conns(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	y, mo, d := time.Now().Date()
 
 	r.ParseForm()
-	sid := r.Form.Get("sid")
-	cs := r.Form.Get("startDate")
-	ce := r.Form.Get("endDate")
 
-	if len(cs) != 10 {
-		cs = fmt.Sprintf("%04d-%02d-%02d", y, mo, d)
+	result := make([]interface{}, 0)
+	for _, server := range servers {
+		cs := r.Form.Get("startDate")
+		ce := r.Form.Get("endDate")
+
+		if len(cs) != 10 {
+			cs = fmt.Sprintf("%04d-%02d-%02d", y, mo, d)
+		}
+
+		if len(ce) != 10 {
+			ce = fmt.Sprintf("%04d-%02d-%02d 23:59:59", y, mo, d)
+		} else {
+			ce = ce + " 23:59:59"
+		}
+		fmt.Println("cs=" + cs + ", ce=" + ce)
+
+		err := db.Select(&conns,
+			fmt.Sprintf("%s=%d AND %s>='%s' AND %s<='%s'",
+				m.ColumnSpeedServerID,
+				server.ID,
+				m.ColumnServerCreateAt, cs,
+				m.ColumnServerCreateAt, ce))
+
+		if err != nil {
+			logger.E("select today failed, err=%s", err)
+			w.WriteHeader(401)
+			return
+		}
+
+		result = append(result, map[string]interface{}{
+			m.ColumnServerTitle:      server.Title,
+			m.ColumnServerChartColor: server.ChartColor,
+			"conns":                  conns,
+		})
 	}
 
-	if len(ce) != 10 {
-		ce = fmt.Sprintf("%04d-%02d-%02d 23:59:59", y, mo, d)
-	} else {
-		ce = ce + " 23:59:59"
-	}
-	fmt.Println("cs=" + cs + ", ce=" + ce)
-
-	err := db.Select(&conns,
-		fmt.Sprintf("%s=%s AND %s>='%s' AND %s<='%s'",
-			m.ColumnSpeedServerID,
-			sid,
-			m.ColumnServerCreateAt, cs,
-			m.ColumnServerCreateAt, ce))
-
-	if err != nil {
-		logger.E("select today failed, err=%s", err)
-		w.WriteHeader(401)
-		return
-	}
-
-	b, err := json.Marshal(conns)
+	b, err := json.Marshal(result)
 	if err != nil {
 		w.WriteHeader(402)
 		return

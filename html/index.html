@@ -17,40 +17,8 @@
 </head>
 
 <body class="h-100">
-    <div class="color-switcher-toggle animated pulse infinite">
-        <i class="material-icons">settings</i>
-    </div>
     <div class="container-fluid">
         <div class="row">
-            <!-- Main Sidebar -->
-            <aside class="main-sidebar col-12 col-md-3 col-lg-2 px-0">
-                <div class="main-navbar">
-                    <nav class="navbar align-items-stretch navbar-light bg-white flex-md-nowrap border-bottom p-0">
-                        <a class="navbar-brand w-100 mr-0" href="#" style="line-height: 25px;">
-                            <div class="d-table m-auto">
-                                <img id="main-logo" class="d-inline-block align-top mr-1" style="max-width: 25px;"
-                                    src="images/shards-dashboards-logo.svg" alt="Shards Dashboard">
-                                <span class="d-none d-md-inline ml-1">Shards Dashboard</span>
-                            </div>
-                        </a>
-                        <a class="toggle-sidebar d-sm-inline d-md-none d-lg-none">
-                            <i class="material-icons">&#xE5C4;</i>
-                        </a>
-                    </nav>
-                </div>
-                <form action="#" class="main-sidebar__search w-100 border-right d-sm-flex d-md-none d-lg-none">
-                    <div class="input-group input-group-seamless ml-3">
-                        <div class="input-group-prepend">
-                            <div class="input-group-text">
-                                <i class="fas fa-search"></i>
-                            </div>
-                        </div>
-                        <input class="navbar-search form-control" type="text" placeholder="Search for something..."
-                            aria-label="Search">
-                    </div>
-                </form>
-            </aside>
-            <!-- End Main Sidebar -->
             <main class="main-content col-lg-10 col-md-9 col-sm-12 p-0 offset-lg-2 offset-md-3">
                 <div class="main-content-container container-fluid px-4">
                     <!-- Page Header -->
@@ -79,7 +47,7 @@
                                                 <input type="text" readonly class="input-sm form-control" name="end"
                                                     placeholder="End Date" id="date-picker-2">
                                                 <span class="input-group-append">
-                                                    <span class="input-group-text" onclick="javascript:alert('123')">
+                                                    <span class="input-group-text" onclick="javascript:drawChart()">
                                                         <i class="material-icons"></i>
                                                     </span>
                                                 </span>
@@ -109,6 +77,7 @@
     <script src="scripts/shards-dashboards.1.1.0.min.js"></script>
     <script>
         // Blog overview date range init.
+        var servers;
         $('#date-picker').datepicker({});
         $('#date-picker-1').val('2019-07-08')
         $('#date-picker-2').val('2019-07-08')
@@ -121,49 +90,16 @@
             return moment().add(days, 'd').format();
         }
 
-        var configModel = {
+        var speedModel = {
             type: 'line',
             data: {
                 datasets: [
-                    {
-                        label: 'us1',
-                        backgroundColor: "#FF0000",
-                        borderColor: "#FF0000",
-                        fill: false,
-                        data: [
-                            {
-                                x: "2019-07-01 15:01",
-                                y: 1
-                            },
-                            {
-                                x: "2019-07-01 15:02",
-                                y: 2
-                            },
-                            {
-                                x: "2019-07-01 15:03",
-                                y: 3
-                            },
-                            {
-                                x: "2019-07-01 15:04",
-                                y: 4
-                            },
-                            {
-                                x: "2019-07-01 15:05",
-                                y: 5
-                            },
-                            {
-                                x: "2019-07-01 15:06",
-                                y: 6
-                            }
-                        ],
-                    }
                 ]
             },
             options: {
                 scales: {
                     xAxes: [{
                         type: 'time',
-                        display: true,
                         scaleLabel: {
                             display: true,
                             labelString: 'Date'
@@ -186,19 +122,112 @@
             }
         };
 
-        $.get("/server", function(data) {
-            console.log(data)
-            var servers = eval("(" + data + ")");
-            console.log(servers[0].host)
-        })
+        console.log(speedModel)
 
+        var connsModel = {
+            type: 'line',
+            data: {
+                datasets: [
+                    {
+                        label: 'us1',
+                        backgroundColor: "#FF0000",
+                        borderColor: "#FF0000",
+                        fill: false,
+                        data: [
+                        ],
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    xAxes: [{
+                        type: 'time',
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Date'
+                        },
+                        ticks: {
+                            major: {
+                                fontStyle: 'bold',
+                                fontColor: '#FF0000'
+                            }
+                        }
+                    }],
+                    yAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Value'
+                        }
+                    }]
+                },
+            }
+        };
 
-        window.onload = function () {
-            var ctx = document.getElementById("canvas_speed").getContext('2d');
-            window.speedline = new Chart(ctx, configModel)
-            var ctx = document.getElementById("canvas_conns").getContext('2d');
-            window.speedline = new Chart(ctx, configModel)
+        function drawChart() {
+            $.get("/speed", function (data) {
+                var servers = eval("(" + data + ")")
+
+                speedModel.data.datasets = new Array()
+                for (var i = 0; i < servers.length; i++) {
+                    var server = servers[i]
+                    var item = {
+                        label: server.title,
+                        backgroundColor: server.chart_color,
+                        borderColor: server.chart_color,
+                        fill: false,
+                        data: [
+                        ],
+                    }
+
+                    for (var j = 0; j < server.speeds.length; j++) {
+                        var r = parseInt(parseInt(server.speeds[j].receive) / (1024 * 1024))
+                        var d = {
+                            x: server.speeds[j].create_at,
+                            y: r
+                        }
+
+                        item.data.push(d)
+                    }
+                    speedModel.data.datasets.push(item)
+                }
+
+                var ctx = document.getElementById("canvas_speed").getContext('2d');
+                new Chart(ctx, speedModel)
+            })
+
+            $.get("/conns", function (data) {
+                var servers = eval("(" + data + ")")
+
+                connsModel.data.datasets = new Array()
+                for (var i = 0; i < servers.length; i++) {
+                    var server = servers[i]
+                    var item = {
+                        label: server.title,
+                        backgroundColor: server.chart_color,
+                        borderColor: server.chart_color,
+                        fill: false,
+                        data: [
+                        ],
+                    }
+
+                    for (var j = 0; j < server.conns.length; j++) {
+                        var d = {
+                            x: server.conns[j].create_at,
+                            y: parseInt(server.conns[j].conns)
+                        }
+
+                        item.data.push(d)
+                    }
+                    connsModel.data.datasets.push(item)
+                }
+
+                var ctx = document.getElementById("canvas_conns").getContext('2d');
+                new Chart(ctx, connsModel)
+            })
         }
+
+        drawChart()
     </script>
 </body>
 
