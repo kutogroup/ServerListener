@@ -17,18 +17,18 @@ import (
 )
 
 var ticks = 0
+var servers []m.Server
 var db = pkg.NewDatabase("sl", "localhost:3306", "root", "root")
 var logger = pkg.NewLogger(os.Stdout, true)
 
 func main() {
-	var servers []m.Server
 	err := db.Select(&servers, "id>0")
 	if err != nil {
 		panic(err)
 	}
 
 	if servers[0].ReceiverStart == "0" {
-		initServer(servers)
+		initServer()
 	}
 
 	ticker := time.NewTicker(time.Minute)
@@ -36,7 +36,7 @@ func main() {
 		for range ticker.C {
 			now := time.Now()
 			if now.Day() == 1 && now.Hour() == 0 && now.Minute() == 1 {
-				initServer(servers)
+				initServer()
 				continue
 			}
 
@@ -107,11 +107,12 @@ func main() {
 	})
 	r.GET("/speed", Speed)
 	r.GET("/conns", Conns)
+	r.GET("/server", Server)
 	r.ServeFiles("/html/*filepath", http.Dir("html/"))
 	log.Fatal(http.ListenAndServe(":9090", r))
 }
 
-func initServer(servers []m.Server) {
+func initServer() {
 	for _, s := range servers {
 		r := strings.TrimRight(utils.CommandGetResult("./receive", s.Username, s.Host), "\n")
 		t := strings.TrimRight(utils.CommandGetResult("./transmit", s.Username, s.Host), "\n")
@@ -136,6 +137,19 @@ func initServer(servers []m.Server) {
 			logger.E("update db failed, err=%s", err)
 		}
 	}
+}
+
+//Server 获取服务器
+func Server(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	b, err := json.Marshal(servers)
+
+	if err != nil {
+		logger.E("get server failed, err=%s", err)
+		w.WriteHeader(405)
+		return
+	}
+
+	w.Write(b)
 }
 
 //Speed 流量监听
