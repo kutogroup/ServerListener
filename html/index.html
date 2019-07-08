@@ -1,10 +1,178 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html class="no-js h-100" lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <title>Test </title>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Home</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="css/all.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" id="main-stylesheet" data-version="1.1.0" href="styles/shards-dashboards.1.1.0.min.css">
+    <link rel="stylesheet" href="styles/extras.1.1.0.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js"></script>
+    <script async defer src="js/buttons.js"></script>
 </head>
-<body>
-    <h1>Test</h1>
+
+<body class="h-100">
+    <div class="color-switcher-toggle animated pulse infinite">
+        <i class="material-icons">settings</i>
+    </div>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Main Sidebar -->
+            <aside class="main-sidebar col-12 col-md-3 col-lg-2 px-0">
+                <div class="main-navbar">
+                    <nav class="navbar align-items-stretch navbar-light bg-white flex-md-nowrap border-bottom p-0">
+                        <a class="navbar-brand w-100 mr-0" href="#" style="line-height: 25px;">
+                            <div class="d-table m-auto">
+                                <img id="main-logo" class="d-inline-block align-top mr-1" style="max-width: 25px;"
+                                    src="images/shards-dashboards-logo.svg" alt="Shards Dashboard">
+                                <span class="d-none d-md-inline ml-1">Shards Dashboard</span>
+                            </div>
+                        </a>
+                        <a class="toggle-sidebar d-sm-inline d-md-none d-lg-none">
+                            <i class="material-icons">&#xE5C4;</i>
+                        </a>
+                    </nav>
+                </div>
+                <form action="#" class="main-sidebar__search w-100 border-right d-sm-flex d-md-none d-lg-none">
+                    <div class="input-group input-group-seamless ml-3">
+                        <div class="input-group-prepend">
+                            <div class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </div>
+                        </div>
+                        <input class="navbar-search form-control" type="text" placeholder="Search for something..."
+                            aria-label="Search">
+                    </div>
+                </form>
+            </aside>
+            <!-- End Main Sidebar -->
+            <main class="main-content col-lg-10 col-md-9 col-sm-12 p-0 offset-lg-2 offset-md-3">
+                <div class="main-content-container container-fluid px-4">
+                    <!-- Page Header -->
+                    <div class="page-header row no-gutters py-4">
+                        <div class="col-12 col-sm-4 text-center text-sm-left mb-0">
+                            <span class="text-uppercase page-subtitle">Dashboard</span>
+                            <h3 class="page-title">服务器监控后台</h3>
+                        </div>
+                    </div>
+                    <!-- End Page Header -->
+                    <div class="row">
+                        <!-- Speed Stats -->
+                        <div class="col-lg-8 col-md-12 col-sm-12 mb-4">
+                            <div class="card card-small">
+                                <div class="card-header border-bottom">
+                                    <h6 class="m-0">Speed</h6>
+                                </div>
+                                <div class="card-body pt-0">
+                                    <div class="row border-bottom py-2 bg-light">
+                                        <div class="col-12 col-sm-6">
+                                            <div id="date-picker"
+                                                class="input-daterange input-group input-group-sm my-auto ml-auto mr-auto ml-sm-auto mr-sm-0"
+                                                style="max-width: 350px;">
+                                                <input type="text" readonly class="input-sm form-control" name="start"
+                                                    placeholder="Start Date" id="date-picker-1">
+                                                <input type="text" readonly class="input-sm form-control" name="end"
+                                                    placeholder="End Date" id="date-picker-2">
+                                                <span class="input-group-append">
+                                                    <span class="input-group-text" onclick="javascript:alert('123')">
+                                                        <i class="material-icons"></i>
+                                                    </span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <canvas id="canvas_speed" height="300" style="max-width: 100% !important;"
+                                        class="blog-overview-users"></canvas>
+                                    <canvas id="canvas_conns" height="300" style="max-width: 100% !important;"
+                                        class="blog-overview-users"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- End Speed Stats -->
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script src="scripts/jquery-3.3.1.min.js"></script>
+    <script src="scripts/popper.min.js"></script>
+    <script src="scripts/bootstrap.min.js"></script>
+    <script src="scripts/Chart.min.js"></script>
+    <script src="scripts/shards.min.js"></script>
+    <script src="scripts/jquery.sharrre.min.js"></script>
+    <script src="scripts/extras.1.1.0.min.js"></script>
+    <script src="scripts/shards-dashboards.1.1.0.min.js"></script>
+    <script>
+        // Blog overview date range init.
+        $('#date-picker').datepicker({});
+        $('#date-picker-1').val('2019-07-08')
+        $('#date-picker-2').val('2019-07-08')
+
+        function newDate(days) {
+            return moment().add(days, 'd').toDate();
+        }
+
+        function newDateString(days) {
+            return moment().add(days, 'd').format();
+        }
+
+        window.randomScalingFactor = function () {
+            return Math.round(Math.random() * 10);
+        }
+
+        var config = {
+            type: 'line',
+            data: {
+                datasets: [
+                    {
+                        label: 'us1',
+                        backgroundColor: "#FF0000",
+                        borderColor: "#FF0000",
+                        fill: false,
+                        data: [
+                        ],
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    xAxes: [{
+                        type: 'time',
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Date'
+                        },
+                        ticks: {
+                            major: {
+                                fontStyle: 'bold',
+                                fontColor: '#FF0000'
+                            }
+                        }
+                    }],
+                    yAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'value'
+                        }
+                    }]
+                },
+            }
+        };
+
+        window.onload = function () {
+            var ctx = document.getElementById("canvas_speed").getContext('2d');
+            window.speedline = new Chart(ctx, config)
+            var ctx = document.getElementById("canvas_conns").getContext('2d');
+            window.speedline = new Chart(ctx, config)
+        }
+    </script>
 </body>
+
 </html>
