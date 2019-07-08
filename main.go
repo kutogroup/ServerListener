@@ -110,7 +110,7 @@ func initServer(servers []m.Server) {
 	for _, s := range servers {
 		r := strings.TrimRight(utils.CommandGetResult("./receive", s.Username, s.Host), "\n")
 		t := strings.TrimRight(utils.CommandGetResult("./transmit", s.Username, s.Host), "\n")
-		logger.I("r=%s, t=%s", r, t)
+		logger.I("host=%s, r=%s, t=%s", s.Host, r, t)
 
 		ri, err := strconv.ParseInt(r, 10, 64)
 		if err != nil {
