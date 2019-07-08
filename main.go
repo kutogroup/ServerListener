@@ -142,8 +142,6 @@ func initServer() {
 
 //Speed 流量监听
 func Speed(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	var speeds []m.Speed
-
 	y, mo, d := time.Now().Date()
 
 	r.ParseForm()
@@ -162,8 +160,8 @@ func Speed(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		} else {
 			ce = ce + " 23:59:59"
 		}
-		fmt.Println("cs=" + cs + ", ce=" + ce)
 
+		var speeds []m.Speed
 		err := db.Select(&speeds,
 			fmt.Sprintf("%s=%d AND %s>='%s' AND %s<='%s'",
 				m.ColumnSpeedServerID,
@@ -195,8 +193,6 @@ func Speed(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 //Conns 获取服务器连接数
 func Conns(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	var conns []m.Conns
-
 	y, mo, d := time.Now().Date()
 
 	r.ParseForm()
@@ -217,6 +213,7 @@ func Conns(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		}
 		fmt.Println("cs=" + cs + ", ce=" + ce)
 
+		var conns []m.Conns
 		err := db.Select(&conns,
 			fmt.Sprintf("%s=%d AND %s>='%s' AND %s<='%s'",
 				m.ColumnSpeedServerID,
