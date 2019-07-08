@@ -165,7 +165,10 @@
         };
 
         function drawChart() {
-            $.get("/speed", function (data) {
+            var startDate = $("#date-picker-1").val()
+            var endDate = $("#date-picker-2").val()
+
+            $.get("/speed?startDate=" + startDate + "&endDate=" + endDate, function (data) {
                 var servers = eval("(" + data + ")")
 
                 speedModel.data.datasets = new Array()
@@ -196,7 +199,7 @@
                 new Chart(ctx, speedModel)
             })
 
-            $.get("/conns", function (data) {
+            $.get("/conns?startDate=" + startDate + "&endDate=" + endDate, function (data) {
                 var servers = eval("(" + data + ")")
 
                 connsModel.data.datasets = new Array()
