@@ -54,7 +54,9 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <canvas id="canvas_speed" height="300" style="max-width: 100% !important;"
+                                    <canvas id="canvas_receive" height="300" style="max-width: 100% !important;"
+                                        class="blog-overview-users"></canvas>
+                                    <canvas id="canvas_transmit" height="300" style="max-width: 100% !important;"
                                         class="blog-overview-users"></canvas>
                                     <canvas id="canvas_conns" height="300" style="max-width: 100% !important;"
                                         class="blog-overview-users"></canvas>
@@ -90,7 +92,7 @@
             return moment().add(days, 'd').format();
         }
 
-        var speedModel = {
+        var receiveModel = {
             type: 'line',
             data: {
                 datasets: [
@@ -115,14 +117,44 @@
                         display: true,
                         scaleLabel: {
                             display: true,
-                            labelString: 'MB'
+                            labelString: 'Receive MB'
                         }
                     }]
                 },
             }
         };
 
-        console.log(speedModel)
+        var transmitModel = {
+            type: 'line',
+            data: {
+                datasets: [
+                ]
+            },
+            options: {
+                scales: {
+                    xAxes: [{
+                        type: 'time',
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Date'
+                        },
+                        ticks: {
+                            major: {
+                                fontStyle: 'bold',
+                                fontColor: '#FF0000'
+                            }
+                        }
+                    }],
+                    yAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Transmit MB'
+                        }
+                    }]
+                },
+            }
+        };
 
         var connsModel = {
             type: 'line',
@@ -171,7 +203,8 @@
             $.get("/speed?startDate=" + startDate + "&endDate=" + endDate, function (data) {
                 var servers = eval("(" + data + ")")
 
-                speedModel.data.datasets = new Array()
+                receiveModel.data.datasets = new Array()
+                transmitModel.data.datasets = new Array()
                 for (var i = 0; i < servers.length; i++) {
                     var server = servers[i]
                     var item = {
@@ -192,11 +225,33 @@
 
                         item.data.push(d)
                     }
-                    speedModel.data.datasets.push(item)
+                    receiveModel.data.datasets.push(item)
+
+                    var item = {
+                        label: server.title,
+                        backgroundColor: server.chart_color,
+                        borderColor: server.chart_color,
+                        fill: false,
+                        data: [
+                        ],
+                    }
+
+                    for (var j = 0; j < server.speeds.length; j++) {
+                        var r = parseInt(parseInt(server.speeds[j].transmit) / (1024 * 1024))
+                        var d = {
+                            x: server.speeds[j].create_at,
+                            y: r
+                        }
+
+                        item.data.push(d)
+                    }
+                    transmitModel.data.datasets.push(item)
                 }
 
-                var ctx = document.getElementById("canvas_speed").getContext('2d');
-                new Chart(ctx, speedModel)
+                var ctx = document.getElementById("canvas_receive").getContext('2d');
+                new Chart(ctx, receiveModel)
+                var ctx = document.getElementById("canvas_transmit").getContext('2d');
+                new Chart(ctx, transmitModel)
             })
 
             $.get("/conns?startDate=" + startDate + "&endDate=" + endDate, function (data) {
