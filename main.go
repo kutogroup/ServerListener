@@ -1,8 +1,8 @@
 package main
 
 import (
-	"ServerListener/models"
 	m "ServerListener/models"
+	"encoding/json"
 	"fmt"
 	"kuto/pkg"
 	"kuto/utils"
@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-chi/chi"
+	"github.com/julienschmidt/httprouter"
 )
 
 var ticks = 0
@@ -59,7 +59,6 @@ func main() {
 
 					r := strings.TrimRight(utils.CommandGetResult("./receive", s.Username, s.Host), "\n")
 					t := strings.TrimRight(utils.CommandGetResult("./transmit", s.Username, s.Host), "\n")
-					logger.I("r=%s, t=%s", r, t)
 
 					speed := &m.Speed{}
 					ri, err := strconv.ParseInt(r, 10, 64)
@@ -77,6 +76,7 @@ func main() {
 					speed.ServerID = s.ID
 					speed.Receive = strconv.FormatInt(ri-sri, 10)
 					speed.Transmit = strconv.FormatInt(ti-sti, 10)
+					logger.I("r=%s, t=%s", speed.Receive, speed.Transmit)
 					err = db.Insert(speed)
 					if err != nil {
 						logger.E("insert db failed, err=%s", err)
@@ -101,11 +101,13 @@ func main() {
 		}
 	}()
 
-	r := chi.NewRouter()
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	r := httprouter.New()
+	r.GET("/", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		w.Write([]byte("Not available"))
 	})
-	r.Get("/netstat", NetStat)
+	r.GET("/speed", Speed)
+	r.GET("/conns", Conns)
+	r.ServeFiles("/html/*filepath", http.Dir("html/"))
 	log.Fatal(http.ListenAndServe(":9090", r))
 }
 
@@ -136,40 +138,90 @@ func initServer(servers []m.Server) {
 	}
 }
 
-//流量监听
-func NetStat(w http.ResponseWriter, r *http.Request) {
-	y, m, d := time.Now().Date()
+//Speed 流量监听
+func Speed(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	var speeds []m.Speed
 
-	var servers []models.Server
+	y, mo, d := time.Now().Date()
 
 	r.ParseForm()
+	sid := r.Form.Get("sid")
 	cs := r.Form.Get("startDate")
 	ce := r.Form.Get("endDate")
 
 	if len(cs) != 10 {
-		cs = fmt.Sprintf("%04d-%02d-%02d", y, m, d)
+		cs = fmt.Sprintf("%04d-%02d-%02d", y, mo, d)
 	}
 
 	if len(ce) != 10 {
-		ce = fmt.Sprintf("%04d-%02d-%02d 23:59:59", y, m, d)
+		ce = fmt.Sprintf("%04d-%02d-%02d 23:59:59", y, mo, d)
 	} else {
 		ce = ce + " 23:59:59"
 	}
 	fmt.Println("cs=" + cs + ", ce=" + ce)
 
-	err := db.Select(&servers,
-		fmt.Sprintf("%s>='%s' AND %s<='%s'",
-			models.ColumnServerCreateAt, cs,
-			models.ColumnServerCreateAt, ce))
+	err := db.Select(&speeds,
+		fmt.Sprintf("%s=%s AND %s>='%s' AND %s<='%s'",
+			m.ColumnSpeedServerID,
+			sid,
+			m.ColumnServerCreateAt, cs,
+			m.ColumnServerCreateAt, ce))
 
 	if err != nil {
 		logger.E("select today failed, err=%s", err)
-		w.WriteHeader(403)
+		w.WriteHeader(401)
 		return
 	}
 
-	startDate := chi.URLParam(r, "startDate")
-	endDate := chi.URLParam(r, "endDate")
+	b, err := json.Marshal(speeds)
+	if err != nil {
+		w.WriteHeader(402)
+		return
+	}
 
-	w.Write([]byte(startDate + "</br>" + endDate))
+	w.Write(b)
+}
+
+//Conns 获取服务器连接数
+func Conns(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	var conns []m.Conns
+
+	y, mo, d := time.Now().Date()
+
+	r.ParseForm()
+	sid := r.Form.Get("sid")
+	cs := r.Form.Get("startDate")
+	ce := r.Form.Get("endDate")
+
+	if len(cs) != 10 {
+		cs = fmt.Sprintf("%04d-%02d-%02d", y, mo, d)
+	}
+
+	if len(ce) != 10 {
+		ce = fmt.Sprintf("%04d-%02d-%02d 23:59:59", y, mo, d)
+	} else {
+		ce = ce + " 23:59:59"
+	}
+	fmt.Println("cs=" + cs + ", ce=" + ce)
+
+	err := db.Select(&conns,
+		fmt.Sprintf("%s=%s AND %s>='%s' AND %s<='%s'",
+			m.ColumnSpeedServerID,
+			sid,
+			m.ColumnServerCreateAt, cs,
+			m.ColumnServerCreateAt, ce))
+
+	if err != nil {
+		logger.E("select today failed, err=%s", err)
+		w.WriteHeader(401)
+		return
+	}
+
+	b, err := json.Marshal(conns)
+	if err != nil {
+		w.WriteHeader(402)
+		return
+	}
+
+	w.Write(b)
 }
