@@ -1,3 +1,3 @@
 #!/bin/bash
 
-ssh $1@$2 netstat -nat | grep -i "$3" | wc -l
+ssh -o "StrictHostKeyChecking no" $1@$2 netstat -nat | grep -i "$3" | wc -l
