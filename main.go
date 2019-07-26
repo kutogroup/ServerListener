@@ -40,6 +40,15 @@ func main() {
 				continue
 			}
 
+			if ticks%5 == 0 {
+				//每隔五分钟刷新服务器
+				var ns []m.Server
+				err := db.Select(&ns, "id>0")
+				if err == nil {
+					servers = ns
+				}
+			}
+
 			ticks = ticks + 1
 
 			if ticks%30 == 0 {
