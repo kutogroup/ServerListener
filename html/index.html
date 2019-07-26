@@ -246,7 +246,7 @@
                     }
 
                     for (var j = 0; j < server.speeds.length; j++) {
-                        var r = parseInt(parseInt(server.speeds[j].receive) / (1024 * 1024))
+                        var r = parseInt(parseInt(server.speeds[j].receive) / (1024 * 1024 * 1024))
                         var d = {
                             x: server.speeds[j].create_at,
                             y: r
