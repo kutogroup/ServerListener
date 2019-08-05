@@ -1,0 +1,12 @@
+#!/bin/bash
+
+HOST=$1
+echo "HOST="$HOST
+
+TODAY=$(date "+%Y-%m-%d")
+echo "TODAY="$TODAY
+
+SERVER_ID=`mysql -uroot -proot -Dsl -s -N -e "SELECT id FROM server WHERE host='"$HOST"'"`
+echo "SERVER_ID="$SERVER_ID
+
+mysql -uroot -proot -Dsl -e "DELETE FROM speed WHERE server_id="$SERVER_ID" AND create_at>'"$TODAY"'"

@@ -1,0 +1,20 @@
+#!/bin/bash
+
+IP=$1
+PORT=$2
+TITLE=$3
+
+echo "IP="$IP",     PORT="$PORT",    TITLE="$TITLE
+COLOR_NUM=`mysql -uroot -proot -Dsl -s -N -e "SELECT COUNT(*) FROM colors;"`
+echo "COLOR_NUM="$COLOR_NUM
+
+SERVER_COUNT=`mysql -uroot -proot -Dsl -s -N -e "SELECT COUNT(*) FROM server;"`
+echo "SERVER_COUNT="$SERVER_COUNT
+
+COLOR_ID=$[$SERVER_COUNT+1]
+echo "COLOR_ID="$COLOR_ID
+
+COLOR=`mysql -uroot -proot -Dsl -s -N -e "SELECT color FROM colors WHERE id=$COLOR_ID"`
+echo "COLOR="$COLOR
+
+mysql -uroot -proot -Dsl -e "INSERT INTO server(host, port, title, chart_color)VALUES('"$IP"',"$PORT",'"$TITLE"','"$COLOR"')"

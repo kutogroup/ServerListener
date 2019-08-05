@@ -1,0 +1,11 @@
+#!/bin/bash
+
+HOST=$1
+echo "HOST="$HOST
+
+SERVER_ID=`mysql -uroot -proot -Dsl -s -N -e "SELECT id FROM server WHERE host='"$HOST"'"`
+echo "SERVER_ID="$SERVER_ID
+
+mysql -uroot -proot -Dsl -e "DELETE FROM conns WHERE server_id="$SERVER_ID
+mysql -uroot -proot -Dsl -e "DELETE FROM speed WHERE server_id="$SERVER_ID
+mysql -uroot -proot -Dsl -e "DELETE FROM server WHERE id="$SERVER_ID
