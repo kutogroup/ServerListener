@@ -1,0 +1,30 @@
+#!/bin/bash
+
+echo "ush0"
+./receive ubuntu ush0.kutoapps.com
+echo "usm0"
+./receive ubuntu usm0.kutoapps.com
+echo "usl0"
+./receive ubuntu usl0.kutoapps.com
+echo "fr0"
+./receive ubuntu fr0.kutoapps.com
+echo "fr1"
+./receive ubuntu fr1.kutoapps.com
+echo "frh0"
+./receive ubuntu frh0.kutoapps.com
+echo "frm0"
+./receive ubuntu frm0.kutoapps.com
+echo "frl0"
+./receive ubuntu frl0.kutoapps.com
+echo "ca"
+./receive ubuntu ca.kutoapps.com
+echo "kr"
+./receive ubuntu kr.kutoapps.com
+echo "in"
+./receive ubuntu in.kutoapps.com
+echo "sg"
+./receive ubuntu sg.kutoapps.com
+echo "jp0"
+./receive ubuntu jp0.kutoapps.com
+echo "jp1"
+./receive ubuntu jp1.kutoapps.com
