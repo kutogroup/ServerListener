@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS `sl`.`server` (
   `receiver_start` BIGINT NOT NULL DEFAULT 0,
   `transmit_start` BIGINT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `host_UNIQUE` (`host` ASC) VISIBLE);
+  UNIQUE INDEX `host_UNIQUE` (`host` ASC));
 
 
 -- -----------------------------------------------------
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS `sl`.`server` (
   `receiver_start` BIGINT NOT NULL DEFAULT 0,
   `transmit_start` BIGINT NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
-  UNIQUE INDEX `host_UNIQUE` (`host` ASC) VISIBLE);
+  UNIQUE INDEX `host_UNIQUE` (`host` ASC));
 
 
 -- -----------------------------------------------------
