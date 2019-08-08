@@ -1,2 +1,2 @@
 #!/bin/bash
-mysql -uroot -proot -Dsl -e "SELECT * FROM server ORDER BY name"
+mysql -uroot -proot -Dsl -e "SELECT * FROM server ORDER BY title"
