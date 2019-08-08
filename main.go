@@ -22,7 +22,7 @@ var db = pkg.NewDatabase("sl", "localhost:3306", "root", "root")
 var logger = pkg.NewLogger(os.Stdout, true)
 
 func main() {
-	err := db.Select(&servers, "id>0")
+	err := db.Select(&servers, "id>0 ORDER BY title")
 	if err != nil {
 		panic(err)
 	}
@@ -43,7 +43,7 @@ func main() {
 			if ticks%5 == 0 {
 				//每隔五分钟刷新服务器
 				var ns []m.Server
-				err := db.Select(&ns, "id>0")
+				err := db.Select(&ns, "id>0 ORDER BY title")
 				if err == nil {
 					servers = ns
 				}
