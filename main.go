@@ -4,14 +4,15 @@ import (
 	m "ServerListener/models"
 	"encoding/json"
 	"fmt"
-	"kuto/pkg"
-	"kuto/utils"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/kutogroup/kuto.api/pkg"
+	"github.com/kutogroup/kuto.api/utils"
 
 	"github.com/julienschmidt/httprouter"
 )
