@@ -1,0 +1,7 @@
+#!/bin/bash
+
+SRC=`cat /proc/net/dev | grep eth0 | awk '{print $2}'`
+sleep 2
+DESC=`cat /proc/net/dev | grep eth0 | awk '{print $2}'`
+OFFSET=$(($DESC-$SRC))
+echo $[$OFFSET/1024]
