@@ -117,8 +117,8 @@ func main() {
 	r.GET("/", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		w.Write([]byte("Not available"))
 	})
-	r.GET("/speed", Speed)
-	r.GET("/conns", Conns)
+	r.GET("/speed/:country", Speed)
+	r.GET("/conns/:country", Conns)
 	r.ServeFiles("/html/*filepath", http.Dir("html/"))
 	log.Fatal(http.ListenAndServe(":9090", r))
 }
@@ -151,7 +151,7 @@ func initServer() {
 }
 
 //Speed 流量监听
-func Speed(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func Speed(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	y, mo, d := time.Now().Date()
 
 	r.ParseForm()
@@ -171,13 +171,27 @@ func Speed(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 			ce = ce + " 23:59:59"
 		}
 
+		var country = ps.ByName("country")
 		var speeds []m.Speed
-		err := db.Select(&speeds,
-			fmt.Sprintf("%s=%d AND %s>='%s' AND %s<='%s'",
-				m.ColumnSpeedServerID,
-				server.ID,
-				m.ColumnServerCreateAt, cs,
-				m.ColumnServerCreateAt, ce))
+		var err error
+
+		if len(country) > 0 {
+			err = db.Select(&speeds,
+				fmt.Sprintf("%s=%d AND %s>='%s' AND %s<='%s' AND %s='%s'",
+					m.ColumnSpeedServerID,
+					server.ID,
+					m.ColumnServerCreateAt, cs,
+					m.ColumnServerCreateAt, ce,
+					m.ColumnServerCountry, country))
+
+		} else {
+			err = db.Select(&speeds,
+				fmt.Sprintf("%s=%d AND %s>='%s' AND %s<='%s'",
+					m.ColumnSpeedServerID,
+					server.ID,
+					m.ColumnServerCreateAt, cs,
+					m.ColumnServerCreateAt, ce))
+		}
 
 		if err != nil {
 			logger.E("select today failed, err=%s", err)
@@ -202,7 +216,7 @@ func Speed(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 //Conns 获取服务器连接数
-func Conns(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func Conns(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	y, mo, d := time.Now().Date()
 
 	r.ParseForm()
@@ -223,13 +237,26 @@ func Conns(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		}
 		fmt.Println("cs=" + cs + ", ce=" + ce)
 
+		var country = ps.ByName("country")
+		var err error
 		var conns []m.Conns
-		err := db.Select(&conns,
-			fmt.Sprintf("%s=%d AND %s>='%s' AND %s<='%s'",
-				m.ColumnSpeedServerID,
-				server.ID,
-				m.ColumnServerCreateAt, cs,
-				m.ColumnServerCreateAt, ce))
+
+		if len(country) > 0 {
+			err = db.Select(&conns,
+				fmt.Sprintf("%s=%d AND %s>='%s' AND %s<='%s' AND %s='%s'",
+					m.ColumnSpeedServerID,
+					server.ID,
+					m.ColumnServerCreateAt, cs,
+					m.ColumnServerCreateAt, ce,
+					m.ColumnServerCountry, country))
+		} else {
+			err = db.Select(&conns,
+				fmt.Sprintf("%s=%d AND %s>='%s' AND %s<='%s'",
+					m.ColumnSpeedServerID,
+					server.ID,
+					m.ColumnServerCreateAt, cs,
+					m.ColumnServerCreateAt, ce))
+		}
 
 		if err != nil {
 			logger.E("select today failed, err=%s", err)

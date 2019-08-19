@@ -15,6 +15,7 @@ const (
 	ColumnServerTitle         = "title"
 	ColumnServerChartColor    = "chart_color"
 	ColumnServerUsername      = "username"
+	ColumnServerCountry       = "country"
 	ColumnServerReceiverStart = "receiver_start"
 	ColumnServerTransmitStart = "transmit_start"
 )
@@ -29,6 +30,7 @@ type Server struct {
 	Title         string `db:"title"          json:"title"          comment:""`
 	ChartColor    string `db:"chart_color"    json:"chart_color"    comment:""`
 	Username      string `db:"username"       json:"username"       comment:""`
+	Country       string `db:"country"        json:"country"        comment:""`
 	ReceiverStart string `db:"receiver_start" json:"receiver_start" comment:""`
 	TransmitStart string `db:"transmit_start" json:"transmit_start" comment:""`
 }
