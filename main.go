@@ -156,8 +156,13 @@ func Speed(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	r.ParseForm()
 
+	var country = ps.ByName("country")
 	result := make([]interface{}, 0)
 	for _, server := range servers {
+		if len(country) > 0 && server.Country != "ALL" && server.Country != country {
+			continue
+		}
+
 		cs := r.Form.Get("startDate")
 		ce := r.Form.Get("endDate")
 
@@ -171,27 +176,14 @@ func Speed(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			ce = ce + " 23:59:59"
 		}
 
-		var country = ps.ByName("country")
 		var speeds []m.Speed
-		var err error
 
-		if len(country) > 0 {
-			err = db.Select(&speeds,
-				fmt.Sprintf("%s=%d AND %s>='%s' AND %s<='%s' AND %s='%s'",
-					m.ColumnSpeedServerID,
-					server.ID,
-					m.ColumnServerCreateAt, cs,
-					m.ColumnServerCreateAt, ce,
-					m.ColumnServerCountry, country))
-
-		} else {
-			err = db.Select(&speeds,
-				fmt.Sprintf("%s=%d AND %s>='%s' AND %s<='%s'",
-					m.ColumnSpeedServerID,
-					server.ID,
-					m.ColumnServerCreateAt, cs,
-					m.ColumnServerCreateAt, ce))
-		}
+		err := db.Select(&speeds,
+			fmt.Sprintf("%s=%d AND %s>='%s' AND %s<='%s'",
+				m.ColumnSpeedServerID,
+				server.ID,
+				m.ColumnServerCreateAt, cs,
+				m.ColumnServerCreateAt, ce))
 
 		if err != nil {
 			logger.E("select today failed, err=%s", err)
@@ -222,7 +214,12 @@ func Conns(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	r.ParseForm()
 
 	result := make([]interface{}, 0)
+	var country = ps.ByName("country")
 	for _, server := range servers {
+		if len(country) > 0 && server.Country != "ALL" && server.Country != country {
+			continue
+		}
+
 		cs := r.Form.Get("startDate")
 		ce := r.Form.Get("endDate")
 
@@ -237,26 +234,14 @@ func Conns(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		}
 		fmt.Println("cs=" + cs + ", ce=" + ce)
 
-		var country = ps.ByName("country")
-		var err error
 		var conns []m.Conns
 
-		if len(country) > 0 {
-			err = db.Select(&conns,
-				fmt.Sprintf("%s=%d AND %s>='%s' AND %s<='%s' AND %s='%s'",
-					m.ColumnSpeedServerID,
-					server.ID,
-					m.ColumnServerCreateAt, cs,
-					m.ColumnServerCreateAt, ce,
-					m.ColumnServerCountry, country))
-		} else {
-			err = db.Select(&conns,
-				fmt.Sprintf("%s=%d AND %s>='%s' AND %s<='%s'",
-					m.ColumnSpeedServerID,
-					server.ID,
-					m.ColumnServerCreateAt, cs,
-					m.ColumnServerCreateAt, ce))
-		}
+		err := db.Select(&conns,
+			fmt.Sprintf("%s=%d AND %s>='%s' AND %s<='%s'",
+				m.ColumnSpeedServerID,
+				server.ID,
+				m.ColumnServerCreateAt, cs,
+				m.ColumnServerCreateAt, ce))
 
 		if err != nil {
 			logger.E("select today failed, err=%s", err)
