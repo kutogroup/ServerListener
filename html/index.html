@@ -60,12 +60,12 @@
                                         </div>
                                         <div class="btn-group btn-group-toggle mb-3" data-toggle="buttons"
                                             style="margin-top:0; margin-right: 10px; float: right">
-                                            <label class="btn btn-white active">
+                                            <label class="btn btn-white active" onchange="countrySwitch('TM')">
                                                 <input type="radio" name="country_options" id="option1"
                                                     autocomplete="off" checked>
                                                 TM
                                             </label>
-                                            <label class="btn btn-white">
+                                            <label class="btn btn-white" onchange="countrySwitch('WORLD')">
                                                 <input type="radio" name="country_options" id="option2"
                                                     autocomplete="off">
                                                 WORLD
@@ -105,6 +105,7 @@
         // Blog overview date range init.
         var servers;
         var connHidden = false;
+        var country = "TM";
 
         function connDisabledAllClick() {
             connHidden = !connHidden;
@@ -112,6 +113,11 @@
             var ele = document.getElementById("connDisabledAll");
             ele.checked = connHidden;
 
+            drawChart();
+        }
+
+        function countrySwitch(c) {
+            country = c;
             drawChart();
         }
 
@@ -253,11 +259,14 @@
             }
         };
 
+        var crtRecev = null;
+        var crtTrans = null;
+        var crtConns = null;
         function drawChart() {
             var startDate = $("#date-picker-1").val()
             var endDate = $("#date-picker-2").val()
 
-            $.get("/speed?startDate=" + startDate + "&endDate=" + endDate, function (data) {
+            $.get("/speed/" + country + "?startDate=" + startDate + "&endDate=" + endDate, function (data) {
                 var servers = eval("(" + data + ")")
 
                 receiveModel.data.datasets = new Array()
@@ -306,12 +315,20 @@
                 }
 
                 var ctx = document.getElementById("canvas_receive").getContext('2d');
-                new Chart(ctx, receiveModel)
+                if (crtRecev == null) {
+                    crtRecev = new Chart(ctx, receiveModel)
+                } else {
+                    crtRecev.update()
+                }
                 var ctx = document.getElementById("canvas_transmit").getContext('2d');
-                new Chart(ctx, transmitModel)
+                if (crtTrans == null) {
+                    crtTrans = new Chart(ctx, transmitModel)
+                } else {
+                    crtTrans.update()
+                }
             })
 
-            $.get("/conns?startDate=" + startDate + "&endDate=" + endDate, function (data) {
+            $.get("/conns/" + country + "?startDate=" + startDate + "&endDate=" + endDate, function (data) {
                 var servers = eval("(" + data + ")")
 
                 connsModel.data.datasets = new Array()
@@ -339,7 +356,11 @@
                 }
 
                 var ctx = document.getElementById("canvas_conns").getContext('2d');
-                new Chart(ctx, connsModel)
+                if (crtConns == null) {
+                    crtConns = new Chart(ctx, connsModel)
+                } else {
+                    crtConns.update()
+                }
             })
         }
 
