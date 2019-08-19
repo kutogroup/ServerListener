@@ -117,6 +117,8 @@ func main() {
 	r.GET("/", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		w.Write([]byte("Not available"))
 	})
+	r.GET("/speed/", Speed)
+	r.GET("/conns/", Conns)
 	r.GET("/speed/:country", Speed)
 	r.GET("/conns/:country", Conns)
 	r.ServeFiles("/html/*filepath", http.Dir("html/"))
