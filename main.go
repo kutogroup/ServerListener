@@ -52,7 +52,7 @@ func main() {
 
 			ticks = ticks + 1
 
-			if ticks%10 == 0 {
+			if ticks%5 == 0 {
 				for _, s := range servers {
 					logger.I("start get server, username=%s, host=%s", s.Username, s.Host)
 					sri, err := strconv.ParseInt(s.ReceiverStart, 10, 64)
