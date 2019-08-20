@@ -41,8 +41,8 @@ func main() {
 				continue
 			}
 
-			if ticks%5 == 0 {
-				//每隔五分钟刷新服务器
+			if ticks%1 == 0 {
+				//每隔一分钟刷新服务器
 				var ns []m.Server
 				err := db.Select(&ns, "id>0 ORDER BY title")
 				if err == nil {
@@ -52,7 +52,7 @@ func main() {
 
 			ticks = ticks + 1
 
-			if ticks%30 == 0 {
+			if ticks%10 == 0 {
 				for _, s := range servers {
 					logger.I("start get server, username=%s, host=%s", s.Username, s.Host)
 					sri, err := strconv.ParseInt(s.ReceiverStart, 10, 64)
