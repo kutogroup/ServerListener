@@ -1,0 +1,13 @@
+#!/bin/bash
+
+SRC=$1
+echo "SRC="$SRC
+DEST=$2
+echo "DEST="$DEST
+
+SERVER_ID=`mysql -uroot -proot -Dsl -s -N -e "SELECT id FROM server WHERE host='"$SRC"'"`
+echo "SERVER_ID="$SERVER_ID
+
+mysql -uroot -proot -Dsl -e "DELETE FROM conns WHERE server_id="$SERVER_ID
+mysql -uroot -proot -Dsl -e "DELETE FROM speed WHERE server_id="$SERVER_ID
+mysql -uroot -proot -Dsl -e "UPDATE server SET receiver_start=0,transmit_start=0,host='"$DEST"' WHERE id="$SERVER_ID
