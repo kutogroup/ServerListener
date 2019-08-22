@@ -8,10 +8,10 @@ echo "IP="$IP",     PORT="$PORT",    TITLE="$TITLE
 COLOR_NUM=`mysql -uroot -proot -Dsl -s -N -e "SELECT COUNT(*) FROM colors;"`
 echo "COLOR_NUM="$COLOR_NUM
 
-SERVER_COUNT=`mysql -uroot -proot -Dsl -s -N -e "SELECT COUNT(*) FROM server;"`
+SERVER_COUNT=`mysql -uroot -proot -Dsl -s -N -e "SELECT id FROM server ORDER BY id DESC LIMIT 0, 1;"`
 echo "SERVER_COUNT="$SERVER_COUNT
 
-COLOR_ID=$[$SERVER_COUNT+1]
+COLOR_ID=$[$[$SERVER_COUNT+1] % $COLOR_NUM]
 echo "COLOR_ID="$COLOR_ID
 
 COLOR=`mysql -uroot -proot -Dsl -s -N -e "SELECT color FROM colors WHERE id=$COLOR_ID"`
