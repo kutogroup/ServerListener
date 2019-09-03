@@ -20,27 +20,28 @@ import (
 var ticks = 0
 var servers []m.Server
 var db = pkg.NewDatabase("sl", "localhost:3306", "root", "root")
-var logger = pkg.NewLogger(os.Stdout, true)
+var logger *pkg.WahaLogger
 
 func main() {
-	err := db.Select(&servers, "id>0 ORDER BY title")
+	logFile, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		panic(err)
 	}
 
-	if servers[0].ReceiverStart == "0" {
+	logger = pkg.NewLogger(logFile, false)
+	err = db.Select(&servers, "id>0 ORDER BY title")
+	if err != nil {
+		panic(err)
+	}
+
+	if len(os.Args) > 2 && os.Args[1] == "init" {
 		initServer()
+		return
 	}
 
 	ticker := time.NewTicker(time.Minute)
 	go func() {
 		for range ticker.C {
-			now := time.Now()
-			if now.Day() == 1 && now.Hour() == 0 && now.Minute() == 1 {
-				initServer()
-				continue
-			}
-
 			if ticks%1 == 0 {
 				//每隔一分钟刷新服务器
 				var ns []m.Server
@@ -54,60 +55,62 @@ func main() {
 
 			if ticks%10 == 0 {
 				for _, s := range servers {
-					logger.I("start get server, username=%s, host=%s", s.Username, s.Host)
-					sri, err := strconv.ParseInt(s.ReceiverStart, 10, 64)
-					if err != nil {
-						logger.E("get server receive err=%s", err)
-						continue
-					}
+					go func(s m.Server) {
+						logger.I("start get server, username=%s, host=%s", s.Username, s.Host)
+						sri, err := strconv.ParseInt(s.ReceiverStart, 10, 64)
+						if err != nil {
+							logger.E("get server receive err=%s", err)
+							return
+						}
 
-					sti, err := strconv.ParseInt(s.TransmitStart, 10, 64)
-					if err != nil {
-						logger.E("get server transmit err=%s", err)
-						continue
-					}
+						sti, err := strconv.ParseInt(s.TransmitStart, 10, 64)
+						if err != nil {
+							logger.E("get server transmit err=%s", err)
+							return
+						}
 
-					r := strings.TrimRight(utils.CommandGetResult("./receive", s.Username, s.Host), "\n")
-					t := strings.TrimRight(utils.CommandGetResult("./transmit", s.Username, s.Host), "\n")
+						r := strings.TrimRight(utils.CommandGetResult("./receive", s.Username, s.Host), "\n")
+						t := strings.TrimRight(utils.CommandGetResult("./transmit", s.Username, s.Host), "\n")
 
-					speed := &m.Speed{}
-					ri, err := strconv.ParseInt(r, 10, 64)
-					if err != nil {
-						logger.E("get receive err=%s", err)
-						continue
-					}
+						speed := &m.Speed{}
+						ri, err := strconv.ParseInt(r, 10, 64)
+						if err != nil {
+							logger.E("get receive err=%s", err)
+							return
+						}
 
-					ti, err := strconv.ParseInt(t, 10, 64)
-					if err != nil {
-						logger.E("get transmit err=%s", err)
-						continue
-					}
+						ti, err := strconv.ParseInt(t, 10, 64)
+						if err != nil {
+							logger.E("get transmit err=%s", err)
+							return
+						}
 
-					logger.I("sri=%d, ri=%d, sti=%d, ti=%d", sri, ri, sti, ti)
+						logger.I("sri=%d, ri=%d, sti=%d, ti=%d", sri, ri, sti, ti)
 
-					speed.ServerID = s.ID
-					speed.Receive = strconv.FormatInt(ri-sri, 10)
-					speed.Transmit = strconv.FormatInt(ti-sti, 10)
-					logger.I("r=%s, t=%s", speed.Receive, speed.Transmit)
-					err = db.Insert(speed)
-					if err != nil {
-						logger.E("insert db failed, err=%s", err)
-						continue
-					}
+						speed.ServerID = s.ID
+						speed.Receive = strconv.FormatInt(ri-sri, 10)
+						speed.Transmit = strconv.FormatInt(ti-sti, 10)
+						logger.I("r=%s, t=%s", speed.Receive, speed.Transmit)
+						err = db.Insert(speed)
+						if err != nil {
+							logger.E("insert db failed, err=%s", err)
+							return
+						}
 
-					c := utils.CommandGetResult("./conn", s.Username, s.Host, strconv.FormatInt(s.Port, 10))
-					c = strings.Trim(c, " ")
-					c = strings.Trim(c, "\n")
-					logger.I("c=%s", c)
-					conn := &m.Conns{}
-					num, err := strconv.ParseInt(c, 10, 64)
-					if err != nil {
-						logger.E("parse conn to int failed, err=%s", err)
-						continue
-					}
-					conn.Conns = num
-					conn.ServerID = s.ID
-					db.Insert(conn)
+						c := utils.CommandGetResult("./conn", s.Username, s.Host, strconv.FormatInt(s.Port, 10))
+						c = strings.Trim(c, " ")
+						c = strings.Trim(c, "\n")
+						logger.I("c=%s", c)
+						conn := &m.Conns{}
+						num, err := strconv.ParseInt(c, 10, 64)
+						if err != nil {
+							logger.E("parse conn to int failed, err=%s", err)
+							return
+						}
+						conn.Conns = num
+						conn.ServerID = s.ID
+						db.Insert(conn)
+					}(s)
 				}
 			}
 		}
