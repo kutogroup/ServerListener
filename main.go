@@ -34,7 +34,7 @@ func main() {
 		panic(err)
 	}
 
-	if len(os.Args) > 2 && os.Args[1] == "init" {
+	if len(os.Args) >= 2 && os.Args[1] == "init" {
 		initServer()
 		return
 	}
