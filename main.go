@@ -28,7 +28,7 @@ func main() {
 		panic(err)
 	}
 
-	logger = pkg.NewLogger(logFile, false)
+	logger = pkg.NewLogger(logFile, true)
 	err = db.Select(&servers, "id>0 ORDER BY title")
 	if err != nil {
 		panic(err)
@@ -39,9 +39,8 @@ func main() {
 		return
 	}
 
-	ticker := time.NewTicker(time.Minute)
 	go func() {
-		for range ticker.C {
+		for {
 			if ticks%1 == 0 {
 				//每隔一分钟刷新服务器
 				var ns []m.Server
@@ -50,8 +49,6 @@ func main() {
 					servers = ns
 				}
 			}
-
-			ticks = ticks + 1
 
 			if ticks%10 == 0 {
 				for _, s := range servers {
@@ -75,22 +72,19 @@ func main() {
 						speed := &m.Speed{}
 						ri, err := strconv.ParseInt(r, 10, 64)
 						if err != nil {
-							logger.E("get receive err=%s", err)
+							logger.E("get receive err, user=%s, host=%s, err=%s", s.Username, s.Host, err)
 							return
 						}
 
 						ti, err := strconv.ParseInt(t, 10, 64)
 						if err != nil {
-							logger.E("get transmit err=%s", err)
+							logger.E("get transmit err, user=%s, host=%s, err=%s", s.Username, s.Host, err)
 							return
 						}
-
-						logger.I("sri=%d, ri=%d, sti=%d, ti=%d", sri, ri, sti, ti)
 
 						speed.ServerID = s.ID
 						speed.Receive = strconv.FormatInt(ri-sri, 10)
 						speed.Transmit = strconv.FormatInt(ti-sti, 10)
-						logger.I("r=%s, t=%s", speed.Receive, speed.Transmit)
 						err = db.Insert(speed)
 						if err != nil {
 							logger.E("insert db failed, err=%s", err)
@@ -100,7 +94,7 @@ func main() {
 						c := utils.CommandGetResult("./conn", s.Username, s.Host, strconv.FormatInt(s.Port, 10))
 						c = strings.Trim(c, " ")
 						c = strings.Trim(c, "\n")
-						logger.I("c=%s", c)
+						logger.I("host=%s, r=%s, t=%s, c=%s", s.Host, speed.Receive, speed.Transmit, c)
 						conn := &m.Conns{}
 						num, err := strconv.ParseInt(c, 10, 64)
 						if err != nil {
@@ -113,6 +107,10 @@ func main() {
 					}(s)
 				}
 			}
+
+			ticks = ticks + 1
+
+			time.Sleep(time.Minute)
 		}
 	}()
 
