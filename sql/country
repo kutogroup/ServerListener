@@ -1,0 +1,9 @@
+#!/bin/bash
+
+
+ID=$1
+echo "ID="$ID
+COUNTRY=$2
+echo "COUNTRY="$COUNTRY
+
+mysql -uroot -proot -Dsl -e "UPDATE server SET country='"$COUNTRY"' WHERE id="$ID
