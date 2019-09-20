@@ -1,10 +1,10 @@
 #!/bin/bash
-
 IP=$1
 PORT=$2
 TITLE=$3
 REGION=$4
 COUNTRY=$5
+AUTO=$6
 
 echo "IP="$IP",     PORT="$PORT",    TITLE="$TITLE
 COLOR_NUM=`mysql -uroot -proot -Dsl -s -N -e "SELECT COUNT(*) FROM colors;"`
@@ -19,9 +19,14 @@ echo "COLOR_ID="$COLOR_ID
 COLOR=`mysql -uroot -proot -Dsl -s -N -e "SELECT color FROM colors WHERE id=$COLOR_ID"`
 echo "COLOR="$COLOR
 
-if [ ! -n "$COUNTRY"]
+if [ ! -n "$COUNTRY" ]
 then
-    mysql -uroot -proot -Dsl -e "INSERT INTO server(host, port, title, chart_color, region)VALUES('"$IP"',"$PORT",'"$TITLE"','"$COLOR"', '"$REGION"')"
+    mysql -uroot -proot -Dsl -e "INSERT INTO server(host, port, title, chart_color, region, auto)VALUES('"$IP"',"$PORT",'"$TITLE"','"$COLOR"', '"$REGION"', 1)"
 else
-    mysql -uroot -proot -Dsl -e "INSERT INTO server(host, port, title, chart_color, region, country)VALUES('"$IP"',"$PORT",'"$TITLE"','"$COLOR"', '"$REGION"', '"$COUNTRY"')"
+    if [ ! -n "$AUTO" ]
+    then
+        mysql -uroot -proot -Dsl -e "INSERT INTO server(host, port, title, chart_color, region, country)VALUES('"$IP"',"$PORT",'"$TITLE"','"$COLOR"', '"$REGION"', '"$COUNTRY"')"
+    else
+        mysql -uroot -proot -Dsl -e "INSERT INTO server(host, port, title, chart_color, region, country, auto)VALUES('"$IP"',"$PORT",'"$TITLE"','"$COLOR"', '"$REGION"', '"$COUNTRY"', "$AUTO")"
+    fi
 fi
