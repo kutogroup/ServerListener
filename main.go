@@ -39,6 +39,11 @@ func main() {
 		return
 	}
 
+	if len(os.Args) >= 3 && os.Args[1] == "replace_ip" {
+		fmt.Println(utils.CommandGetResult("./aws/aws_replace_ip", os.Args[2], "-R"))
+		return
+	}
+
 	go func() {
 		for {
 			today := time.Now().Format("2006-01-02")
