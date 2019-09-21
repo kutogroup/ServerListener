@@ -54,11 +54,11 @@ func main() {
 				}
 
 				var conns []m.Conns
-				err := db.Select(&conns, fmt.Sprintf("%s=%d and create_at>'%s' ORDER BY create_at DESC limit 0, 2", m.ColumnConnsServerID, s.ID, today))
+				err := db.Select(&conns, fmt.Sprintf("%s=%d and create_at>'%s' ORDER BY create_at DESC limit 0, 3", m.ColumnConnsServerID, s.ID, today))
 
 				if err == nil {
-					if len(conns) == 2 {
-						if conns[0].Conns < 5 && conns[1].Conns < 5 {
+					if len(conns) == 3 {
+						if conns[0].Conns < 5 && conns[1].Conns < 5 && conns[2].Conns < 5 {
 							logger.I("need to replace id, s=%s, ip=%s", s.Title, s.Host)
 							//logger.I(utils.CommandGetResult("./aws/aws_replace_ip", s.Host, "-R"))
 						}
