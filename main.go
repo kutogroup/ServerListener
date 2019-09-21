@@ -41,6 +41,29 @@ func main() {
 
 	go func() {
 		for {
+			today := time.Now().Format("2006-01-02")
+			for _, s := range servers {
+				if s.Auto == 0 {
+					continue
+				}
+
+				var conns []m.Conns
+				err := db.Select(&conns, fmt.Sprintf("%s=%d and create_at>'%s' ORDER BY create_at DESC limit 0, 2", m.ColumnConnsServerID, s.ID, today))
+
+				if err == nil {
+					fmt.Println(conns)
+					time.Sleep(5 * time.Second)
+				} else {
+					logger.I("get conns failed")
+				}
+			}
+
+			time.Sleep(time.Minute)
+		}
+	}()
+
+	go func() {
+		for {
 			if ticks%1 == 0 {
 				//每隔一分钟刷新服务器
 				var ns []m.Server
@@ -53,7 +76,6 @@ func main() {
 			if ticks%10 == 0 {
 				for _, s := range servers {
 					go func(s m.Server) {
-						logger.I("start get server, username=%s, host=%s", s.Username, s.Host)
 						sri, err := strconv.ParseInt(s.ReceiverStart, 10, 64)
 						if err != nil {
 							logger.E("get server receive err=%s", err)
@@ -94,7 +116,6 @@ func main() {
 						c := utils.CommandGetResult("./conn", s.Username, s.Host, strconv.FormatInt(s.Port, 10))
 						c = strings.Trim(c, " ")
 						c = strings.Trim(c, "\n")
-						logger.I("host=%s, r=%s, t=%s, c=%s", s.Host, speed.Receive, speed.Transmit, c)
 						conn := &m.Conns{}
 						num, err := strconv.ParseInt(c, 10, 64)
 						if err != nil {

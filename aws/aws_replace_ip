@@ -1,0 +1,101 @@
+#!/bin/bash
+
+cd "$(dirname "$0")"
+echo $(dirname "$0")
+
+IP=$1
+echo "IP="$IP
+if [ ! -n "$IP" ]
+then
+    echo "Please input ip"
+    exit
+fi
+
+REGION=`mysql -uroot -proot -Dsl -s -N -e "SELECT region FROM server WHERE host='"$IP"'"`
+echo "REGION="$REGION
+
+if [ ! -n "$REGION" ]
+then
+    echo "ip not found in database"
+    exit
+fi
+
+AUTO=`mysql -uroot -proot -Dsl -s -N -e "SELECT auto FROM server WHERE host='"$IP"'"`
+echo "AUTO="$AUTO
+if [ $AUTO -eq 0 ]
+then
+    echo "auto is 0"
+    exit
+fi
+
+aws --region $REGION lightsail get-instances > $IP"_si".json
+INSTANCE_RESULT=`go run search_instance.go -p $IP -f $IP"_si".json`
+rm $IP"_si.json"
+STATUS=`echo $INSTANCE_RESULT | cut -d ' ' -f1`
+INSTANCE_NAME=`echo $INSTANCE_RESULT | cut -d ' ' -f2`
+STATIC=`echo $INSTANCE_RESULT | cut -d ' ' -f4`
+echo "status="$STATUS
+echo "name="$INSTANCE_NAME
+echo "static="$STATIC
+
+if [ $STATUS != "OK" ]
+then
+    echo "search instances failed, result="$SEARCH_RESULT
+    exit
+fi
+
+if [ $STATIC == "true" ]
+then
+    echo "is static, need to delete static"
+
+    aws --region $REGION lightsail get-static-ips > $IP"_sp".json
+    IP_RESULT=`go run search_ip.go -p $IP -f $IP"_sp".json`
+    rm $IP"_sp.json"
+    IP_STATUS=`echo $IP_RESULT | cut -d ' ' -f1`
+    IP_NAME=`echo $IP_RESULT | cut -d ' ' -f2`
+    echo "IP_STATUS="$IP_STATUS
+    echo "IP_NAME="$IP_NAME
+
+    if [ $IP_STATUS == "OK" ] 
+    then
+        RELEASE_STATUS=`aws --region $REGION lightsail release-static-ip --static-ip-name $IP_NAME | grep status | head -n 1 | cut -d ':' -f2 | cut -d '"' -f2`
+        if [ $RELEASE_STATUS == "Succeeded" ]
+        then
+            echo "release static ip success"
+            NEW_IP=`aws --region $REGION lightsail get-instance --instance-name $INSTANCE_NAME | grep publicIpAddress | cut -d ':' -f2 | cut -d '"' -f2`
+            rc_replace_all $IP $NEW_IP
+            rc_upload $2
+            echo "new ip="$NEW_IP
+            exit
+        else
+            echo "release ip failed, err="$RELEASE_STATUS
+            exit
+        fi
+    fi
+else
+    echo "not static need to create static"
+
+    IP_NAME="IP_"$INSTANCE_NAME
+    CREATE_STATUS=`aws --region $REGION lightsail allocate-static-ip --static-ip-name $IP_NAME | grep status | head -n 1 | cut -d ':' -f2 | cut -d '"' -f2`
+    if [ $CREATE_STATUS == "Succeeded" ]
+    then
+        echo "create statip ip success"
+        ATTACH_STATUS=`aws --region $REGION lightsail attach-static-ip --static-ip-name $IP_NAME --instance-name $INSTANCE_NAME | grep status | head -n 1 | cut -d ':' -f2 | cut -d '"' -f2`
+
+        if [ $ATTACH_STATUS == "Succeeded" ]
+        then
+            echo "attach statip ip success"
+            NEW_IP=`aws --region $REGION lightsail get-instance --instance-name $INSTANCE_NAME | grep publicIpAddress | cut -d ':' -f2 | cut -d '"' -f2`
+            rc_replace_all $IP $NEW_IP
+            rc_upload $2
+            echo "new ip="$NEW_IP
+            exit
+        else
+            echo "attach static ip failed"
+            exit
+        fi
+    else
+        echo "create static ip failed, err="$CREATE_STATUS
+        exit
+    fi
+fi
