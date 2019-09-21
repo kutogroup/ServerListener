@@ -54,7 +54,7 @@ func main() {
 					if len(conns) == 2 {
 						if conns[0].Conns < 5 && conns[1].Conns < 5 {
 							logger.I("need to replace id, s=%s", s.Title)
-							utils.CommandGetResult("./aws/aws_replace_ip", s.Host, "-R")
+							logger.I(utils.CommandGetResult("./aws/aws_replace_ip", s.Host, "-R"))
 						}
 					}
 				} else {
