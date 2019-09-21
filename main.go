@@ -40,6 +40,7 @@ func main() {
 	}
 
 	if len(os.Args) >= 3 && os.Args[1] == "replace_ip" {
+		fmt.Println("start replace_ip")
 		fmt.Println(utils.CommandGetResult("./aws/aws_replace_ip", os.Args[2], "-R"))
 		return
 	}
@@ -58,8 +59,8 @@ func main() {
 				if err == nil {
 					if len(conns) == 2 {
 						if conns[0].Conns < 5 && conns[1].Conns < 5 {
-							logger.I("need to replace id, s=%s", s.Title)
-							logger.I(utils.CommandGetResult("./aws/aws_replace_ip", s.Host, "-R"))
+							logger.I("need to replace id, s=%s, ip=%s", s.Title, s.Host)
+							//logger.I(utils.CommandGetResult("./aws/aws_replace_ip", s.Host, "-R"))
 						}
 					}
 				} else {
