@@ -71,8 +71,9 @@ func main() {
 							} else {
 								logger.I("need to replace id, s=%s, ip=%s", s.Title, s.Host)
 								replaceIPTable[s.ID] = true
-								utils.CommandGetResult("./aws/aws_replace_ip", s.Host, "-R")
 							}
+
+							utils.CommandGetResult("./aws/aws_replace_ip", s.Host, "-R")
 						} else {
 							delete(replaceIPTable, s.ID)
 							delete(emailTable, s.ID)
