@@ -23,6 +23,7 @@ var db = pkg.NewDatabase("sl", "localhost:3306", "root", "root")
 var email = pkg.NewEmail("sun.zg@outlook.com", "Szg20130515", "smtp-mail.outlook.com", 587, false)
 var logger *pkg.WahaLogger
 var replaceIPTable = make(map[int64]bool)
+var emailTable = make(map[int64]bool)
 
 func main() {
 	logFile, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
@@ -63,7 +64,10 @@ func main() {
 						if conns[0].Conns < 5 && conns[1].Conns < 5 && conns[2].Conns < 5 {
 							if _, ok := replaceIPTable[s.ID]; ok {
 								logger.I("need to replace id, but replace yet, s=%s, ip=%s", s.Title, s.Host)
-								email.Send("support@kutoapps.com", "Server blocked", fmt.Sprintf("title=%s, host=%s", s.Title, s.Host))
+								if _, ok := emailTable[s.ID]; !ok {
+									emailTable[s.ID] = true
+									email.Send("support@kutoapps.com", "Server blocked", fmt.Sprintf("title=%s, host=%s", s.Title, s.Host))
+								}
 							} else {
 								logger.I("need to replace id, s=%s, ip=%s", s.Title, s.Host)
 								replaceIPTable[s.ID] = true
@@ -71,6 +75,7 @@ func main() {
 							}
 						} else {
 							delete(replaceIPTable, s.ID)
+							delete(emailTable, s.ID)
 						}
 					}
 				} else {
