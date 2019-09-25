@@ -57,11 +57,11 @@ func main() {
 				}
 
 				var conns []m.Conns
-				err := db.Select(&conns, fmt.Sprintf("%s=%d and create_at>'%s' ORDER BY create_at DESC limit 0, 3", m.ColumnConnsServerID, s.ID, today))
+				err := db.Select(&conns, fmt.Sprintf("%s=%d and create_at>'%s' ORDER BY create_at DESC limit 0, 2", m.ColumnConnsServerID, s.ID, today))
 
 				if err == nil {
-					if len(conns) == 3 {
-						if conns[0].Conns < 5 && conns[1].Conns < 5 && conns[2].Conns < 5 {
+					if len(conns) == 2 {
+						if conns[0].Conns < 5 && conns[1].Conns < 5 {
 							if _, ok := replaceIPTable[s.ID]; ok {
 								logger.I("need to replace id, but replace yet, s=%s, ip=%s", s.Title, s.Host)
 								if _, ok := emailTable[s.ID]; !ok {
