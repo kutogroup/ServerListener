@@ -22,11 +22,11 @@ fi
 
 AUTO=`mysql -uroot -proot -Dsl -s -N -e "SELECT auto FROM server WHERE host='"$IP"'"`
 echo "AUTO="$AUTO
-if [ $AUTO -eq 0 ]
-then
-    echo "auto is 0"
-    exit
-fi
+#if [ $AUTO -eq 0 ]
+#then
+#    echo "auto is 0"
+#    exit
+#fi
 
 aws --region $REGION lightsail get-instances > $IP"_si".json
 INSTANCE_RESULT=`go run search_instance.go -p $IP -f $IP"_si".json`
@@ -63,8 +63,8 @@ then
         then
             echo "release static ip success"
             NEW_IP=`aws --region $REGION lightsail get-instance --instance-name $INSTANCE_NAME | grep publicIpAddress | cut -d ':' -f2 | cut -d '"' -f2`
-            rc_replace_all $IP $NEW_IP
-            rc_upload $2
+            /home/ubuntu/bin/rc_replace_all $IP $NEW_IP
+            /home/ubuntu/bin/rc_upload $2
             echo "new ip="$NEW_IP
             exit
         else
@@ -86,8 +86,8 @@ else
         then
             echo "attach statip ip success"
             NEW_IP=`aws --region $REGION lightsail get-instance --instance-name $INSTANCE_NAME | grep publicIpAddress | cut -d ':' -f2 | cut -d '"' -f2`
-            rc_replace_all $IP $NEW_IP
-            rc_upload $2
+            /home/ubuntu/bin/rc_replace_all $IP $NEW_IP
+            /home/ubuntu/bin/rc_upload $2
             echo "new ip="$NEW_IP
             exit
         else
