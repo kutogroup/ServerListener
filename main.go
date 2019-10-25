@@ -209,7 +209,7 @@ func Speed(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	var country = ps.ByName("country")
 	result := make([]interface{}, 0)
 	for _, server := range servers {
-		if len(country) > 0 && server.Country != "ALL" && server.Country != country {
+		if len(country) > 0 && server.Country != "ALL" && !strings.Contains(server.Country, country) {
 			continue
 		}
 
