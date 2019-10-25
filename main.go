@@ -266,7 +266,7 @@ func Conns(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	result := make([]interface{}, 0)
 	var country = ps.ByName("country")
 	for _, server := range servers {
-		if len(country) > 0 && server.Country != "ALL" && server.Country != country {
+		if len(country) > 0 && server.Country != "ALL" && !strings.Contains(server.Country, country) {
 			continue
 		}
 
