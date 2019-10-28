@@ -58,7 +58,7 @@ then
 
     if [ $IP_STATUS == "OK" ] 
     then
-        RELEASE_STATUS=`aws --region $REGION lightsail release-static-ip --static-ip-name $IP_NAME | grep status | head -n 1 | cut -d ':' -f2 | cut -d '"' -f2`
+        RELEASE_STATUS=`aws --region $REGION lightsail release-static-ip --static-ip-name $IP_NAME | grep "status\"" | head -n 1 | cut -d ':' -f2 | cut -d '"' -f2`
         if [ $RELEASE_STATUS == "Succeeded" ]
         then
             echo "release static ip success"
@@ -76,11 +76,11 @@ else
     echo "not static need to create static"
 
     IP_NAME="IP_"$INSTANCE_NAME
-    CREATE_STATUS=`aws --region $REGION lightsail allocate-static-ip --static-ip-name $IP_NAME | grep status | head -n 1 | cut -d ':' -f2 | cut -d '"' -f2`
+    CREATE_STATUS=`aws --region $REGION lightsail allocate-static-ip --static-ip-name $IP_NAME | grep "status\"" | head -n 1 | cut -d ':' -f2 | cut -d '"' -f2`
     if [ $CREATE_STATUS == "Succeeded" ]
     then
         echo "create statip ip success"
-        ATTACH_STATUS=`aws --region $REGION lightsail attach-static-ip --static-ip-name $IP_NAME --instance-name $INSTANCE_NAME | grep status | head -n 1 | cut -d ':' -f2 | cut -d '"' -f2`
+        ATTACH_STATUS=`aws --region $REGION lightsail attach-static-ip --static-ip-name $IP_NAME --instance-name $INSTANCE_NAME | grep "status\"" | head -n 1 | cut -d ':' -f2 | cut -d '"' -f2`
 
         if [ $ATTACH_STATUS == "Succeeded" ]
         then
@@ -91,7 +91,7 @@ else
             echo "new ip="$NEW_IP
             exit
         else
-            echo "attach static ip failed"
+            echo "attach static ip failed, ATTACH_STATUS="$CREATE_STATUS
             exit
         fi
     else
