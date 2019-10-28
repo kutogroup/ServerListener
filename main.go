@@ -121,18 +121,26 @@ func main() {
 						ri, err := strconv.ParseInt(r, 10, 64)
 						if err != nil {
 							logger.E("get receive err, user=%s, host=%s, err=%s", s.Username, s.Host, err)
-							return
 						}
 
 						ti, err := strconv.ParseInt(t, 10, 64)
 						if err != nil {
 							logger.E("get transmit err, user=%s, host=%s, err=%s", s.Username, s.Host, err)
-							return
 						}
 
 						speed.ServerID = s.ID
-						speed.Receive = strconv.FormatInt(ri-sri, 10)
-						speed.Transmit = strconv.FormatInt(ti-sti, 10)
+						if ri-sri < 0 {
+							speed.Receive = "0"
+						} else {
+							speed.Receive = strconv.FormatInt(ri-sri, 10)
+						}
+
+						if ti-sti < 0 {
+							speed.Transmit = "0"
+						} else {
+							speed.Transmit = strconv.FormatInt(ti-sti, 10)
+						}
+
 						err = db.Insert(speed)
 						if err != nil {
 							logger.E("insert db failed, err=%s", err)
