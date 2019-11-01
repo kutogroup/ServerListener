@@ -79,7 +79,7 @@
                                     </div>
                                     <canvas id="canvas_conns" height="300" style="max-width: 100% !important;"
                                         class="blog-overview-users"></canvas>
-                                    <div class="card-header border-bottom">
+                                    <!-- <div class="card-header border-bottom">
                                         <h6 class="m-0">入流量</h6>
                                     </div>
                                     <canvas id="canvas_receive" height="300" style="max-width: 100% !important;"
@@ -88,7 +88,7 @@
                                         <h6 class="m-0">出流量</h6>
                                     </div>
                                     <canvas id="canvas_transmit" height="300" style="max-width: 100% !important;"
-                                        class="blog-overview-users"></canvas>
+                                        class="blog-overview-users"></canvas> -->
                                 </div>
                             </div>
                         </div>
@@ -271,67 +271,67 @@
             var startDate = $("#date-picker-1").val()
             var endDate = $("#date-picker-2").val()
 
-            $.get("/speed/" + country + "?startDate=" + startDate + "&endDate=" + endDate, function (data) {
-                var servers = eval("(" + data + ")")
+            // $.get("/speed/" + country + "?startDate=" + startDate + "&endDate=" + endDate, function (data) {
+            //     var servers = eval("(" + data + ")")
 
-                receiveModel.data.datasets = new Array()
-                transmitModel.data.datasets = new Array()
-                for (var i = 0; i < servers.length; i++) {
-                    var server = servers[i]
-                    var item = {
-                        label: server.title,
-                        backgroundColor: server.chart_color,
-                        borderColor: server.chart_color,
-                        fill: false,
-                        data: [
-                        ],
-                    }
+            //     receiveModel.data.datasets = new Array()
+            //     transmitModel.data.datasets = new Array()
+            //     for (var i = 0; i < servers.length; i++) {
+            //         var server = servers[i]
+            //         var item = {
+            //             label: server.title,
+            //             backgroundColor: server.chart_color,
+            //             borderColor: server.chart_color,
+            //             fill: false,
+            //             data: [
+            //             ],
+            //         }
 
-                    for (var j = 0; j < server.speeds.length; j++) {
-                        var r = parseInt(parseInt(server.speeds[j].receive) / (1024 * 1024 * 1024))
-                        var d = {
-                            x: server.speeds[j].create_at,
-                            y: r
-                        }
+            //         for (var j = 0; j < server.speeds.length; j++) {
+            //             var r = parseInt(parseInt(server.speeds[j].receive) / (1024 * 1024 * 1024))
+            //             var d = {
+            //                 x: server.speeds[j].create_at,
+            //                 y: r
+            //             }
 
-                        item.data.push(d)
-                    }
-                    receiveModel.data.datasets.push(item)
+            //             item.data.push(d)
+            //         }
+            //         receiveModel.data.datasets.push(item)
 
-                    var item = {
-                        label: server.title,
-                        backgroundColor: server.chart_color,
-                        borderColor: server.chart_color,
-                        fill: false,
-                        data: [
-                        ],
-                    }
+            //         var item = {
+            //             label: server.title,
+            //             backgroundColor: server.chart_color,
+            //             borderColor: server.chart_color,
+            //             fill: false,
+            //             data: [
+            //             ],
+            //         }
 
-                    for (var j = 0; j < server.speeds.length; j++) {
-                        var r = parseInt(parseInt(server.speeds[j].transmit) / (1024 * 1024 * 1024))
-                        var d = {
-                            x: server.speeds[j].create_at,
-                            y: r
-                        }
+            //         for (var j = 0; j < server.speeds.length; j++) {
+            //             var r = parseInt(parseInt(server.speeds[j].transmit) / (1024 * 1024 * 1024))
+            //             var d = {
+            //                 x: server.speeds[j].create_at,
+            //                 y: r
+            //             }
 
-                        item.data.push(d)
-                    }
-                    transmitModel.data.datasets.push(item)
-                }
+            //             item.data.push(d)
+            //         }
+            //         transmitModel.data.datasets.push(item)
+            //     }
 
-                var ctx = document.getElementById("canvas_receive").getContext('2d');
-                if (crtRecev == null) {
-                    crtRecev = new Chart(ctx, receiveModel)
-                } else {
-                    crtRecev.update()
-                }
-                var ctx = document.getElementById("canvas_transmit").getContext('2d');
-                if (crtTrans == null) {
-                    crtTrans = new Chart(ctx, transmitModel)
-                } else {
-                    crtTrans.update()
-                }
-            })
+            //     var ctx = document.getElementById("canvas_receive").getContext('2d');
+            //     if (crtRecev == null) {
+            //         crtRecev = new Chart(ctx, receiveModel)
+            //     } else {
+            //         crtRecev.update()
+            //     }
+            //     var ctx = document.getElementById("canvas_transmit").getContext('2d');
+            //     if (crtTrans == null) {
+            //         crtTrans = new Chart(ctx, transmitModel)
+            //     } else {
+            //         crtTrans.update()
+            //     }
+            // })
 
             $.get("/conns/" + country + "?startDate=" + startDate + "&endDate=" + endDate, function (data) {
                 var servers = eval("(" + data + ")")
