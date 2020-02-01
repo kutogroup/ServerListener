@@ -1,0 +1,376 @@
+<!doctype html>
+<html class="no-js h-100" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>服务器监控页面</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="css/all.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" id="main-stylesheet" data-version="1.1.0" href="styles/shards-dashboards.1.1.0.min.css">
+    <link rel="stylesheet" href="styles/extras.1.1.0.min.css">
+    <script src="js/moment.min.js"></script>
+    <script async defer src="js/buttons.js"></script>
+</head>
+
+<body class="h-100">
+    <div class="container-fluid">
+        <div class="row">
+            <main class="main-content col-lg-10 col-md-9 col-sm-12 p-0 offset-lg-2 offset-md-3">
+                <div class="main-content-container container-fluid px-4">
+                    <!-- Page Header -->
+                    <div class="page-header row no-gutters py-4">
+                        <div class="col-12 col-sm-4 text-center text-sm-left mb-0">
+                            <span class="text-uppercase page-subtitle">Dashboard</span>
+                            <h3 class="page-title">服务器监控后台</h3>
+                        </div>
+                    </div>
+                    <!-- End Page Header -->
+                    <div class="row">
+                        <!-- Speed Stats -->
+                        <div class="col-lg-8 col-md-12 col-sm-12 mb-4">
+                            <div class="card card-small">
+                                <div class="card-body pt-0">
+                                    <div class="row border-bottom py-2 bg-light">
+                                        <div class="col-12 col-sm-6">
+                                            <div id="date-picker"
+                                                class="input-daterange input-group input-group-sm my-auto ml-auto mr-auto ml-sm-auto mr-sm-0"
+                                                style="max-width: 350px;">
+                                                <input type="text" readonly class="input-sm form-control" name="start"
+                                                    placeholder="Start Date" id="date-picker-1">
+                                                <input type="text" readonly class="input-sm form-control" name="end"
+                                                    placeholder="End Date" id="date-picker-2">
+                                                <span class="input-group-append">
+                                                    <span class="input-group-text" onclick="javascript:drawChart()">
+                                                        <i class="material-icons"></i>
+                                                    </span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-header border-bottom">
+                                        <h6 class="m-0" style="display:inline;">连接数</h6>
+                                        <div class="custom-control custom-checkbox mb-1" style="float: right"
+                                            onclick="connDisabledAllClick()">
+                                            <input type="checkbox" class="custom-control-input" id="connDisabledAll">
+                                            <label class="custom-control-label" for="formsCheckboxDefault">全部禁用</label>
+                                        </div>
+                                        <div class="btn-group btn-group-toggle mb-3" data-toggle="buttons"
+                                            style="margin-top:0; margin-right: 10px; float: right">
+                                            <label class="btn btn-white active" onchange="countrySwitch('TM')">
+                                                <input type="radio" name="country_options" id="option1"
+                                                    autocomplete="off" checked>
+                                                TM
+                                            </label>
+                                            <label class="btn btn-white" onchange="countrySwitch('CN')">
+                                                <input type="radio" name="country_options" id="option2"
+                                                    autocomplete="off">
+                                                CN
+                                            </label>
+                                            <label class="btn btn-white" onchange="countrySwitch('WORLD')">
+                                                <input type="radio" name="country_options" id="option2"
+                                                    autocomplete="off">
+                                                WORLD
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <canvas id="canvas_conns" height="300" style="max-width: 100% !important;"
+                                        class="blog-overview-users"></canvas>
+                                    <!-- <div class="card-header border-bottom">
+                                        <h6 class="m-0">入流量</h6>
+                                    </div>
+                                    <canvas id="canvas_receive" height="300" style="max-width: 100% !important;"
+                                        class="blog-overview-users"></canvas>
+                                    <div class="card-header border-bottom">
+                                        <h6 class="m-0">出流量</h6>
+                                    </div>
+                                    <canvas id="canvas_transmit" height="300" style="max-width: 100% !important;"
+                                        class="blog-overview-users"></canvas> -->
+                                </div>
+                            </div>
+                        </div>
+                        <!-- End Speed Stats -->
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script src="scripts/jquery-3.3.1.min.js"></script>
+    <script src="scripts/popper.min.js"></script>
+    <script src="scripts/bootstrap.min.js"></script>
+    <script src="scripts/Chart.min.js"></script>
+    <script src="scripts/shards.min.js"></script>
+    <script src="scripts/jquery.sharrre.min.js"></script>
+    <script src="scripts/extras.1.1.0.min.js"></script>
+    <script src="scripts/shards-dashboards.1.1.0.min.js"></script>
+    <script>
+        // Blog overview date range init.
+        var servers;
+        var connHidden = false;
+        var country = "TM";
+
+        function connDisabledAllClick() {
+            connHidden = !connHidden;
+
+            var ele = document.getElementById("connDisabledAll");
+            ele.checked = connHidden;
+
+            drawChart();
+        }
+
+        function countrySwitch(c) {
+            country = c;
+            drawChart();
+        }
+
+        Date.prototype.format = function (fmt) {
+            var o = {
+                "M+": this.getMonth() + 1,                 //月份 
+                "d+": this.getDate(),                    //日 
+                "h+": this.getHours(),                   //小时 
+                "m+": this.getMinutes(),                 //分 
+                "s+": this.getSeconds(),                 //秒 
+                "q+": Math.floor((this.getMonth() + 3) / 3), //季度 
+                "S": this.getMilliseconds()             //毫秒 
+            };
+            if (/(y+)/.test(fmt)) {
+                fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+            }
+            for (var k in o) {
+                if (new RegExp("(" + k + ")").test(fmt)) {
+                    fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+                }
+            }
+            return fmt;
+        }
+
+        var date = new Date()
+        $('#date-picker').datepicker({});
+        $('#date-picker-1').val(date.format('yyyy-MM-dd'))
+        $('#date-picker-2').val(date.format('yyyy-MM-dd'))
+
+        function newDate(days) {
+            return moment().add(days, 'd').toDate();
+        }
+
+        function newDateString(days) {
+            return moment().add(days, 'd').format();
+        }
+
+        var receiveModel = {
+            type: 'line',
+            data: {
+                datasets: [
+                ]
+            },
+            options: {
+                scales: {
+                    xAxes: [{
+                        type: 'time',
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Date'
+                        },
+                        ticks: {
+                            major: {
+                                fontStyle: 'bold',
+                                fontColor: '#FF0000'
+                            }
+                        }
+                    }],
+                    yAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Receive MB'
+                        }
+                    }]
+                },
+            }
+        };
+
+        var transmitModel = {
+            type: 'line',
+            data: {
+                datasets: [
+                ]
+            },
+            options: {
+                scales: {
+                    xAxes: [{
+                        type: 'time',
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Date'
+                        },
+                        ticks: {
+                            major: {
+                                fontStyle: 'bold',
+                                fontColor: '#FF0000'
+                            }
+                        }
+                    }],
+                    yAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Transmit MB'
+                        }
+                    }]
+                },
+            }
+        };
+
+        var connsModel = {
+            type: 'line',
+            data: {
+                datasets: [
+                    {
+                        label: 'us1',
+                        backgroundColor: "#FF0000",
+                        borderColor: "#FF0000",
+                        fill: false,
+                        data: [
+                        ],
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    xAxes: [{
+                        type: 'time',
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Date'
+                        },
+                        ticks: {
+                            major: {
+                                fontStyle: 'bold',
+                                fontColor: '#FF0000'
+                            }
+                        }
+                    }],
+                    yAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: '连接数'
+                        }
+                    }]
+                },
+            }
+        };
+
+        var crtRecev = null;
+        var crtTrans = null;
+        var crtConns = null;
+        function drawChart() {
+            var startDate = $("#date-picker-1").val()
+            var endDate = $("#date-picker-2").val()
+
+            // $.get("/speed/" + country + "?startDate=" + startDate + "&endDate=" + endDate, function (data) {
+            //     var servers = eval("(" + data + ")")
+
+            //     receiveModel.data.datasets = new Array()
+            //     transmitModel.data.datasets = new Array()
+            //     for (var i = 0; i < servers.length; i++) {
+            //         var server = servers[i]
+            //         var item = {
+            //             label: server.title,
+            //             backgroundColor: server.chart_color,
+            //             borderColor: server.chart_color,
+            //             fill: false,
+            //             data: [
+            //             ],
+            //         }
+
+            //         for (var j = 0; j < server.speeds.length; j++) {
+            //             var r = parseInt(parseInt(server.speeds[j].receive) / (1024 * 1024 * 1024))
+            //             var d = {
+            //                 x: server.speeds[j].create_at,
+            //                 y: r
+            //             }
+
+            //             item.data.push(d)
+            //         }
+            //         receiveModel.data.datasets.push(item)
+
+            //         var item = {
+            //             label: server.title,
+            //             backgroundColor: server.chart_color,
+            //             borderColor: server.chart_color,
+            //             fill: false,
+            //             data: [
+            //             ],
+            //         }
+
+            //         for (var j = 0; j < server.speeds.length; j++) {
+            //             var r = parseInt(parseInt(server.speeds[j].transmit) / (1024 * 1024 * 1024))
+            //             var d = {
+            //                 x: server.speeds[j].create_at,
+            //                 y: r
+            //             }
+
+            //             item.data.push(d)
+            //         }
+            //         transmitModel.data.datasets.push(item)
+            //     }
+
+            //     var ctx = document.getElementById("canvas_receive").getContext('2d');
+            //     if (crtRecev == null) {
+            //         crtRecev = new Chart(ctx, receiveModel)
+            //     } else {
+            //         crtRecev.update()
+            //     }
+            //     var ctx = document.getElementById("canvas_transmit").getContext('2d');
+            //     if (crtTrans == null) {
+            //         crtTrans = new Chart(ctx, transmitModel)
+            //     } else {
+            //         crtTrans.update()
+            //     }
+            // })
+
+            $.get("/conns/" + country + "?startDate=" + startDate + "&endDate=" + endDate, function (data) {
+                var servers = eval("(" + data + ")")
+
+                connsModel.data.datasets = new Array()
+                for (var i = 0; i < servers.length; i++) {
+                    var server = servers[i]
+                    var item = {
+                        label: server.title,
+                        backgroundColor: server.chart_color,
+                        borderColor: server.chart_color,
+                        fill: false,
+                        hidden: connHidden,
+                        data: [
+                        ],
+                    }
+
+                    for (var j = 0; j < server.conns.length; j++) {
+                        var d = {
+                            x: server.conns[j].create_at,
+                            y: parseInt(server.conns[j].conns)
+                        }
+
+                        item.data.push(d)
+                    }
+                    connsModel.data.datasets.push(item)
+                }
+
+                var ctx = document.getElementById("canvas_conns").getContext('2d');
+                if (crtConns == null) {
+                    crtConns = new Chart(ctx, connsModel)
+                } else {
+                    crtConns.update()
+                }
+            })
+        }
+
+        drawChart()
+    </script>
+</body>
+
+</html>

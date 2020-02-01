@@ -4,6 +4,7 @@ import (
 	m "ServerListener/models"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -37,11 +38,6 @@ func main() {
 		panic(err)
 	}
 
-	if len(os.Args) >= 2 && os.Args[1] == "init" {
-		initServer()
-		return
-	}
-
 	if len(os.Args) >= 3 && os.Args[1] == "replace_ip" {
 		fmt.Println("start replace_ip")
 		fmt.Println(utils.CommandGetResult("./aws/aws_replace_ip", os.Args[2], "-R"))
@@ -52,22 +48,25 @@ func main() {
 		for {
 			today := time.Now().Format("2006-01-02")
 			for _, s := range servers {
-				if s.Auto == 0 {
-					continue
-				}
-
-				var conns []m.Conns
-				err := db.Select(&conns, fmt.Sprintf("%s=%d and create_at>'%s' ORDER BY create_at DESC limit 0, 2", m.ColumnConnsServerID, s.ID, today))
+				var conns []m.Connections
+				err := db.Select(&conns, fmt.Sprintf("%s=%d and create_at>'%s' ORDER BY create_at DESC limit 0, 2", m.ColumnConnectionsID, s.ID, today))
 
 				if err == nil {
 					if len(conns) == 2 {
-						if conns[0].Conns < 5 && conns[1].Conns < 5 {
+						if (conns[0].TCP < 10 && conns[0].UDP < 10) &&
+							(conns[1].TCP < 10 && conns[1].UDP < 10) {
+
+							if _, ok := emailTable[s.ID]; !ok {
+								emailTable[s.ID] = true
+								email.Send("kutogroup@outlook.com", "Server blocked", fmt.Sprintf("title=%s, host=%s", s.Title, s.Host))
+							}
+
+							if s.Auto == 0 {
+								continue
+							}
+
 							if _, ok := replaceIPTable[s.ID]; ok {
 								logger.I("need to replace id, but replace yet, s=%s, ip=%s", s.Title, s.Host)
-								if _, ok := emailTable[s.ID]; !ok {
-									emailTable[s.ID] = true
-									email.Send("support@kutoapps.com", "Server blocked", fmt.Sprintf("title=%s, host=%s", s.Title, s.Host))
-								}
 							} else {
 								logger.I("need to replace id, s=%s, ip=%s", s.Title, s.Host)
 								replaceIPTable[s.ID] = true
@@ -102,63 +101,37 @@ func main() {
 			if ticks%10 == 0 {
 				for _, s := range servers {
 					go func(s m.Server) {
-						sri, err := strconv.ParseInt(s.ReceiverStart, 10, 64)
+						resp, err := http.Get(fmt.Sprintf("http://%s:31676/conn", s.Host))
 						if err != nil {
-							logger.E("get server receive err=%s", err)
+							logger.E("get server conn failed")
+							return
+						}
+						body, err := ioutil.ReadAll(resp.Body)
+						if err != nil {
+							logger.E("read conn body failed")
 							return
 						}
 
-						sti, err := strconv.ParseInt(s.TransmitStart, 10, 64)
-						if err != nil {
-							logger.E("get server transmit err=%s", err)
-							return
-						}
+						result := string(body)
+						subs := strings.Split(result, ",")
+						if len(subs) == 2 {
+							tcp, err := strconv.ParseInt(subs[0], 10, 64)
+							if err != nil {
+								logger.E("convert tcp failed")
+								return
+							}
+							udp, err := strconv.ParseInt(subs[1], 10, 64)
+							if err != nil {
+								logger.E("convert udp failed")
+								return
+							}
 
-						r := strings.TrimRight(utils.CommandGetResult("./receive", s.Username, s.Host), "\n")
-						t := strings.TrimRight(utils.CommandGetResult("./transmit", s.Username, s.Host), "\n")
-
-						speed := &m.Speed{}
-						ri, err := strconv.ParseInt(r, 10, 64)
-						if err != nil {
-							logger.E("get receive err, user=%s, host=%s, err=%s", s.Username, s.Host, err)
+							conn := &m.Connections{}
+							conn.ServerID = s.ID
+							conn.TCP = tcp
+							conn.UDP = udp
+							db.Insert(conn)
 						}
-
-						ti, err := strconv.ParseInt(t, 10, 64)
-						if err != nil {
-							logger.E("get transmit err, user=%s, host=%s, err=%s", s.Username, s.Host, err)
-						}
-
-						speed.ServerID = s.ID
-						if ri-sri < 0 {
-							speed.Receive = "0"
-						} else {
-							speed.Receive = strconv.FormatInt(ri-sri, 10)
-						}
-
-						if ti-sti < 0 {
-							speed.Transmit = "0"
-						} else {
-							speed.Transmit = strconv.FormatInt(ti-sti, 10)
-						}
-
-						err = db.Insert(speed)
-						if err != nil {
-							logger.E("insert db failed, err=%s", err)
-							return
-						}
-
-						c := utils.CommandGetResult("./conn", s.Username, s.Host, strconv.FormatInt(s.Port, 10))
-						c = strings.Trim(c, " ")
-						c = strings.Trim(c, "\n")
-						conn := &m.Conns{}
-						num, err := strconv.ParseInt(c, 10, 64)
-						if err != nil {
-							logger.E("parse conn to int failed, err=%s", err)
-							return
-						}
-						conn.Conns = num
-						conn.ServerID = s.ID
-						db.Insert(conn)
 					}(s)
 				}
 			}
@@ -173,39 +146,10 @@ func main() {
 	r.GET("/", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		w.Write([]byte("Not available"))
 	})
-	r.GET("/speed/", Speed)
 	r.GET("/conns/", Conns)
-	r.GET("/speed/:country", Speed)
-	r.GET("/conns/:country", Conns)
+	r.GET("/single/:id", Single)
 	r.ServeFiles("/html/*filepath", http.Dir("html/"))
 	log.Fatal(http.ListenAndServe(":9090", r))
-}
-
-func initServer() {
-	for _, s := range servers {
-		r := strings.TrimRight(utils.CommandGetResult("./receive", s.Username, s.Host), "\n")
-		t := strings.TrimRight(utils.CommandGetResult("./transmit", s.Username, s.Host), "\n")
-		logger.I("host=%s, r=%s, t=%s", s.Host, r, t)
-
-		ri, err := strconv.ParseInt(r, 10, 64)
-		if err != nil {
-			logger.E("init server receive err=%s", err)
-			continue
-		}
-
-		ti, err := strconv.ParseInt(t, 10, 64)
-		if err != nil {
-			logger.E("init server transmit err=%s", err)
-			continue
-		}
-
-		s.ReceiverStart = strconv.FormatInt(ri, 10)
-		s.TransmitStart = strconv.FormatInt(ti, 10)
-		err = db.Update(&s, m.ColumnServerReceiverStart, m.ColumnServerTransmitStart)
-		if err != nil {
-			logger.E("update db failed, err=%s", err)
-		}
-	}
 }
 
 //Speed 流量监听
@@ -237,11 +181,12 @@ func Speed(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		var speeds []m.Speed
 
 		err := db.Select(&speeds,
-			fmt.Sprintf("%s=%d AND %s>='%s' AND %s<='%s'",
+			fmt.Sprintf("%s=%d AND %s>='%s' AND %s<='%s' ORDER BY %s DESC LIMIT 0,1",
 				m.ColumnSpeedServerID,
 				server.ID,
 				m.ColumnServerCreateAt, cs,
-				m.ColumnServerCreateAt, ce))
+				m.ColumnServerCreateAt, ce,
+				m.ColumnServerID))
 
 		if err != nil {
 			logger.E("select today failed, err=%s", err)
@@ -292,14 +237,15 @@ func Conns(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		}
 		fmt.Println("cs=" + cs + ", ce=" + ce)
 
-		var conns []m.Conns
+		var conns []m.Connections
 
 		err := db.Select(&conns,
-			fmt.Sprintf("%s=%d AND %s>='%s' AND %s<='%s'",
-				m.ColumnSpeedServerID,
+			fmt.Sprintf("%s=%d AND %s>='%s' AND %s<='%s' ORDER BY %s DESC LIMIT 0,1",
+				m.ColumnConnectionsServerID,
 				server.ID,
-				m.ColumnServerCreateAt, cs,
-				m.ColumnServerCreateAt, ce))
+				m.ColumnConnectionsCreateAt, cs,
+				m.ColumnConnectionsCreateAt, ce,
+				m.ColumnServerID))
 
 		if err != nil {
 			logger.E("select today failed, err=%s", err)
@@ -308,10 +254,77 @@ func Conns(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		}
 
 		result = append(result, map[string]interface{}{
-			m.ColumnServerTitle:      server.Title,
-			m.ColumnServerChartColor: server.ChartColor,
-			"conns":                  conns,
+			m.ColumnServerTitle:         server.Title,
+			m.ColumnServerChartColor:    server.ChartColor,
+			m.ColumnConnectionsServerID: server.ID,
+			"conns":                     conns,
 		})
+	}
+
+	b, err := json.Marshal(result)
+	if err != nil {
+		w.WriteHeader(402)
+		return
+	}
+
+	w.Write(b)
+}
+
+//Single 获取服务器连接数
+func Single(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	y, mo, d := time.Now().Date()
+
+	r.ParseForm()
+
+	var idStr = ps.ByName("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		logger.E("no id specific, %s", err)
+		w.WriteHeader(402)
+		return
+	}
+
+	var server m.Server
+	for _, s := range servers {
+		if s.ID == id {
+			server = s
+			break
+		}
+	}
+
+	cs := r.Form.Get("startDate")
+	ce := r.Form.Get("endDate")
+
+	if len(cs) != 10 {
+		cs = fmt.Sprintf("%04d-%02d-%02d", y, mo, d)
+	}
+
+	if len(ce) != 10 {
+		ce = fmt.Sprintf("%04d-%02d-%02d 23:59:59", y, mo, d)
+	} else {
+		ce = ce + " 23:59:59"
+	}
+	fmt.Println("cs=" + cs + ", ce=" + ce)
+
+	var conns []m.Connections
+	err = db.Select(&conns,
+		fmt.Sprintf("%s=%d AND %s>='%s' AND %s<='%s'",
+			m.ColumnConnectionsServerID,
+			server.ID,
+			m.ColumnConnectionsCreateAt, cs,
+			m.ColumnConnectionsCreateAt, ce))
+
+	if err != nil {
+		logger.E("select today failed, err=%s", err)
+		w.WriteHeader(401)
+		return
+	}
+
+	result := map[string]interface{}{
+		m.ColumnServerTitle:         server.Title,
+		m.ColumnServerChartColor:    server.ChartColor,
+		m.ColumnConnectionsServerID: server.ID,
+		"conns":                     conns,
 	}
 
 	b, err := json.Marshal(result)
