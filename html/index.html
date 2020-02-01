@@ -40,7 +40,7 @@
                     <thead class="bg-light">
                       <tr>
                         <th scope="col" class="border-0">ID</th>
-                        <th scope="col" class="border-0">标题</th>
+                        <th scope="col" class="border-0"><a href="javascript:orderByTitle()">标题</a></th>
                         <th scope="col" class="border-0"><a href="javascript:orderByTCP()">TCP</a></th>
                         <th scope="col" class="border-0"><a href="javascript:orderByUDP()">UDP</a></th>
                         <th scope="col" class="border-0">时间</th>
@@ -81,8 +81,6 @@
         c1 = s1.conns[0].tcp
       }
 
-      console.log("i=" +i + ", c=" + c1)
-
       for (var j = i + 1; j < servers.length; j++) {
         var s2 = servers[j]
 
@@ -113,8 +111,6 @@
         c1 = s1.conns[0].udp
       }
 
-      console.log("i=" +i + ", c=" + c1)
-
       for (var j = i + 1; j < servers.length; j++) {
         var s2 = servers[j]
 
@@ -127,6 +123,25 @@
           servers[i] = s2
           servers[j] = s1
           c1 = c2
+          s1 = s2
+        }
+      }
+    }
+
+    fillBody()
+  }
+
+  function orderByTitle() {
+    var max = 0
+    for (var i = 0; i < servers.length; i++) {
+      var s1 = servers[i]
+
+      for (var j = i + 1; j < servers.length; j++) {
+        var s2 = servers[j]
+
+        if (s2.title > s1.title) {
+          servers[i] = s2
+          servers[j] = s1
           s1 = s2
         }
       }

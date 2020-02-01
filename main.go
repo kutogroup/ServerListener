@@ -104,11 +104,19 @@ func main() {
 						resp, err := http.Get(fmt.Sprintf("http://%s:31676/conn", s.Host))
 						if err != nil {
 							logger.E("get server conn failed")
+							conn := &m.Connections{
+								ServerID: s.ID,
+							}
+							db.Insert(conn)
 							return
 						}
 						body, err := ioutil.ReadAll(resp.Body)
 						if err != nil {
 							logger.E("read conn body failed")
+							conn := &m.Connections{
+								ServerID: s.ID,
+							}
+							db.Insert(conn)
 							return
 						}
 
