@@ -89,7 +89,7 @@
           c2 = s2.conns[0].tcp
         }
 
-        if (c2 > c1) {
+        if (c2 < c1) {
           servers[i] = s2
           servers[j] = s1
           c1 = c2
@@ -119,7 +119,7 @@
           c2 = s2.conns[0].udp
         }
 
-        if (c2 > c1) {
+        if (c2 < c1) {
           servers[i] = s2
           servers[j] = s1
           c1 = c2
@@ -139,7 +139,7 @@
       for (var j = i + 1; j < servers.length; j++) {
         var s2 = servers[j]
 
-        if (s2.title > s1.title) {
+        if (s2.title < s1.title) {
           servers[i] = s2
           servers[j] = s1
           s1 = s2
