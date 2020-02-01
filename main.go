@@ -56,12 +56,12 @@ func main() {
 						if (conns[0].TCP < 10 && conns[0].UDP < 10) &&
 							(conns[1].TCP < 10 && conns[1].UDP < 10) {
 
-							if _, ok := emailTable[s.ID]; !ok {
-								emailTable[s.ID] = true
-								email.Send("kutogroup@outlook.com", "Server blocked", fmt.Sprintf("title=%s, host=%s", s.Title, s.Host))
-							}
-
 							if s.Auto == 0 {
+								if _, ok := emailTable[s.ID]; !ok {
+									emailTable[s.ID] = true
+									email.Send("kutogroup@outlook.com", "Server blocked", fmt.Sprintf("title=%s, host=%s", s.Title, s.Host))
+								}
+
 								continue
 							}
 
