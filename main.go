@@ -51,6 +51,7 @@ func main() {
 				err := db.Select(&conns, fmt.Sprintf("%s=%d and create_at>'%s' ORDER BY create_at DESC limit 0, 2", m.ColumnConnectionsID, s.ID, today))
 
 				if err == nil {
+					fmt.Println(fmt.Sprintf("%s=%d and create_at>'%s' ORDER BY create_at DESC limit 0, 2", m.ColumnConnectionsID, s.ID, today))
 					fmt.Println("s=", s.Title, "conns lenght is", len(conns))
 
 					if len(conns) == 2 {
