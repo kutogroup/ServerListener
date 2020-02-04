@@ -22,8 +22,7 @@ var ticks = 0
 var servers []m.Server
 var db = pkg.NewDatabase("sl", "localhost:3306", "root", "root")
 var email = pkg.NewEmail("sun.zg@outlook.com", "Szg20130515", "smtp-mail.outlook.com", 587, false)
-var logger *pkg.WahaLogger
-var replaceIPTable = make(map[int64]bool)
+var logger *pkg.KutoLogger
 var emailTable = make(map[int64]bool)
 
 func main() {
@@ -65,16 +64,9 @@ func main() {
 								continue
 							}
 
-							if _, ok := replaceIPTable[s.ID]; ok {
-								logger.I("need to replace id, but replace yet, s=%s, ip=%s", s.Title, s.Host)
-							} else {
-								logger.I("need to replace id, s=%s, ip=%s", s.Title, s.Host)
-								replaceIPTable[s.ID] = true
-							}
-
+							logger.E("need to replace id, s=%s, ip=%s", s.Title, s.Host)
 							utils.CommandGetResult("./aws/aws_replace_ip", s.Host, "-R")
 						} else {
-							delete(replaceIPTable, s.ID)
 							delete(emailTable, s.ID)
 						}
 					}
@@ -83,7 +75,7 @@ func main() {
 				}
 			}
 
-			time.Sleep(time.Minute)
+			time.Sleep(time.Minute * 5)
 		}
 	}()
 
@@ -112,7 +104,7 @@ func main() {
 						}
 						body, err := ioutil.ReadAll(resp.Body)
 						if err != nil {
-							logger.E("read conn body failed")
+							logger.E("read conn body failed, title=%s, ip=%s", s.Title, s.Host)
 							conn := &m.Connections{
 								ServerID: s.ID,
 							}
