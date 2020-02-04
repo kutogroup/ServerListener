@@ -51,6 +51,8 @@ func main() {
 				err := db.Select(&conns, fmt.Sprintf("%s=%d and create_at>'%s' ORDER BY create_at DESC limit 0, 2", m.ColumnConnectionsID, s.ID, today))
 
 				if err == nil {
+					fmt.Println("s=", s.Title, "conns lenght is", len(conns))
+
 					if len(conns) == 2 {
 						fmt.Println("s=", s.Title, "tcp0=", conns[0].TCP, "tcp1=", conns[1].TCP, "udp0=", conns[0].UDP, "udp1=", conns[1].UDP)
 						if (conns[0].TCP < 10 && conns[0].UDP < 10) &&
