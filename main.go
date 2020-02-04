@@ -48,12 +48,9 @@ func main() {
 			today := time.Now().Format("2006-01-02")
 			for _, s := range servers {
 				var conns []m.Connections
-				err := db.Select(&conns, fmt.Sprintf("%s=%d and create_at>'%s' ORDER BY create_at DESC limit 0, 2", m.ColumnConnectionsID, s.ID, today))
+				err := db.Select(&conns, fmt.Sprintf("%s=%d and create_at>'%s' ORDER BY create_at DESC limit 0, 2", m.ColumnConnectionsServerID, s.ID, today))
 
 				if err == nil {
-					fmt.Println(fmt.Sprintf("%s=%d and create_at>'%s' ORDER BY create_at DESC limit 0, 2", m.ColumnConnectionsID, s.ID, today))
-					fmt.Println("s=", s.Title, "conns lenght is", len(conns))
-
 					if len(conns) == 2 {
 						fmt.Println("s=", s.Title, "tcp0=", conns[0].TCP, "tcp1=", conns[1].TCP, "udp0=", conns[0].UDP, "udp1=", conns[1].UDP)
 						if (conns[0].TCP < 10 && conns[0].UDP < 10) &&
