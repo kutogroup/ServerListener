@@ -52,6 +52,7 @@ func main() {
 
 				if err == nil {
 					if len(conns) == 2 {
+						fmt.Println("s=", s.Title, "tcp0=", conns[0].TCP, "tcp1=", conns[1].TCP, "udp0=", conns[0].UDP, "udp1=", conns[1].UDP)
 						if (conns[0].TCP < 10 && conns[0].UDP < 10) &&
 							(conns[1].TCP < 10 && conns[1].UDP < 10) {
 
@@ -64,6 +65,7 @@ func main() {
 								continue
 							}
 
+							fmt.Println("s=", s.Title, ", start replace id, title=,", s.Title, ", ip=", s.Host)
 							logger.E("need to replace id, s=%s, ip=%s", s.Title, s.Host)
 							utils.CommandGetResult("./aws/aws_replace_ip", s.Host, "-R")
 						} else {
