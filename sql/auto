@@ -1,0 +1,9 @@
+#!/bin/bash
+
+
+ID=$1
+echo "ID="$ID
+AUTO=$2
+echo "AUTO="$AUTO
+
+mysql -uroot -proot -Dsl -e "UPDATE server SET auto='"$AUTO"' WHERE id="$ID
