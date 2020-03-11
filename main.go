@@ -53,8 +53,8 @@ func main() {
 				if err == nil {
 					if len(conns) == 2 {
 						fmt.Println("s=", s.Title, "tcp0=", conns[0].TCP, "tcp1=", conns[1].TCP, "udp0=", conns[0].UDP, "udp1=", conns[1].UDP)
-						if (conns[0].TCP < 10 && conns[0].UDP < 10) &&
-							(conns[1].TCP < 10 && conns[1].UDP < 10) {
+						if (conns[0].TCP < 5 && conns[0].UDP < 5) &&
+							(conns[1].TCP < 5 && conns[1].UDP < 5) {
 
 							if s.Auto == 0 {
 								if _, ok := emailTable[s.ID]; !ok {
@@ -152,64 +152,6 @@ func main() {
 	r.GET("/single/:id", Single)
 	r.ServeFiles("/html/*filepath", http.Dir("html/"))
 	log.Fatal(http.ListenAndServe(":9090", r))
-}
-
-//Speed 流量监听
-func Speed(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	y, mo, d := time.Now().Date()
-
-	r.ParseForm()
-
-	var country = ps.ByName("country")
-	result := make([]interface{}, 0)
-	for _, server := range servers {
-		if len(country) > 0 && server.Country != "ALL" && !strings.Contains(server.Country, country) {
-			continue
-		}
-
-		cs := r.Form.Get("startDate")
-		ce := r.Form.Get("endDate")
-
-		if len(cs) != 10 {
-			cs = fmt.Sprintf("%04d-%02d-%02d", y, mo, d)
-		}
-
-		if len(ce) != 10 {
-			ce = fmt.Sprintf("%04d-%02d-%02d 23:59:59", y, mo, d)
-		} else {
-			ce = ce + " 23:59:59"
-		}
-
-		var speeds []m.Speed
-
-		err := db.Select(&speeds,
-			fmt.Sprintf("%s=%d AND %s>='%s' AND %s<='%s' ORDER BY %s DESC LIMIT 0,1",
-				m.ColumnSpeedServerID,
-				server.ID,
-				m.ColumnServerCreateAt, cs,
-				m.ColumnServerCreateAt, ce,
-				m.ColumnServerID))
-
-		if err != nil {
-			logger.E("select today failed, err=%s", err)
-			w.WriteHeader(401)
-			return
-		}
-
-		result = append(result, map[string]interface{}{
-			m.ColumnServerTitle:      server.Title,
-			m.ColumnServerChartColor: server.ChartColor,
-			"speeds":                 speeds,
-		})
-	}
-
-	b, err := json.Marshal(result)
-	if err != nil {
-		w.WriteHeader(402)
-		return
-	}
-
-	w.Write(b)
 }
 
 //Conns 获取服务器连接数
