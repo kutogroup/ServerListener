@@ -86,6 +86,7 @@ else
         then
             echo "attach statip ip success"
             NEW_IP=`aws --region $REGION lightsail get-instance --instance-name $INSTANCE_NAME | grep publicIpAddress | cut -d ':' -f2 | cut -d '"' -f2`
+	    curl -d "" https://config.kutogroup.com/replace_ip/$IP/$NEW_IP
             /home/ubuntu/bin/rc_replace_all $IP $NEW_IP
             /home/ubuntu/bin/rc_upload $2
             echo "new ip="$NEW_IP
